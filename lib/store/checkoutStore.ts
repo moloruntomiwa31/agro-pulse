@@ -6,11 +6,10 @@ export type CartItem = {
   name: string;
   farm: string;
   price: number;
-  weight: number;
+  unit: string;
+  quantity: number;
   image: string;
 };
-
-export type PaymentMethod = 'credit_card' | 'mobile_money';
 
 export type SubscriptionOption = 'none' | 'daily' | 'weekly' | 'monthly';
 
@@ -18,7 +17,6 @@ interface CheckoutState {
   items: CartItem[];
   shipping: number;
   serviceFee: number;
-  paymentMethod: PaymentMethod;
   subscriptionOption: SubscriptionOption;
   
   // Computed
@@ -26,42 +24,59 @@ interface CheckoutState {
   total: () => number;
   
   // Actions
-  setPaymentMethod: (method: PaymentMethod) => void;
   setSubscriptionOption: (option: SubscriptionOption) => void;
-  addItem: (item: CartItem) => void;
+  addItem: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
   removeItem: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
 }
 
 // Map the products with IDs 7, 8, 9 to CartItems to match the initial mockup
 const initialCheckoutItems: CartItem[] = INITIAL_PRODUCTS
   .filter(p => p.id === 7 || p.id === 8 || p.id === 9)
   .map(p => {
-    // Determine a dummy weight and total price to match the visual design
-    const weight = p.id === 7 ? 500 : p.id === 8 ? 200 : 100;
-    const price = p.id === 7 ? 225.00 : p.id === 8 ? 240.00 : 210.00;
+    // Determine a dummy quantity
+    const quantity = p.id === 7 ? 10 : p.id === 8 ? 30 : 20;
+    const basePrice = parseFloat(p.price.replace('₦', ''));
     
     return {
       id: p.id.toString(),
       name: p.name,
       farm: p.farm,
-      price: price,
-      weight: weight,
+      price: basePrice,
+      unit: p.unit || 'kg',
+      quantity: quantity,
       image: p.image || '',
     };
   });
 
 export const useCheckoutStore = create<CheckoutState>((set, get) => ({
   items: initialCheckoutItems,
-  shipping: 12.50,
-  serviceFee: 5.00,
-  paymentMethod: 'credit_card',
+  shipping: 12500,
+  serviceFee: 5000,
   subscriptionOption: 'none',
 
-  subtotal: () => get().items.reduce((acc, item) => acc + item.price, 0),
+  subtotal: () => get().items.reduce((acc, item) => acc + (item.price * item.quantity), 0),
   total: () => get().subtotal() + get().shipping + get().serviceFee,
 
-  setPaymentMethod: (method) => set({ paymentMethod: method }),
   setSubscriptionOption: (option) => set({ subscriptionOption: option }),
-  addItem: (item) => set((state) => ({ items: [...state.items, item] })),
+  
+  addItem: (item) => set((state) => {
+    const existing = state.items.find(i => i.id === item.id);
+    if (existing) {
+      return {
+        items: state.items.map(i => 
+          i.id === item.id ? { ...i, quantity: i.quantity + (item.quantity || 1) } : i
+        )
+      };
+    }
+    return { items: [...state.items, { ...item, quantity: item.quantity || 1 }] };
+  }),
+  
   removeItem: (id) => set((state) => ({ items: state.items.filter(item => item.id !== id) })),
+  
+  updateQuantity: (id, quantity) => set((state) => ({
+    items: quantity <= 0 
+      ? state.items.filter(i => i.id !== id)
+      : state.items.map(i => i.id === id ? { ...i, quantity } : i)
+  })),
 }));

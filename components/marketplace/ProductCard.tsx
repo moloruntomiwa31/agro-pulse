@@ -1,7 +1,7 @@
 "use client";
 import { Plus, ShoppingCart, Minus, Zap } from "lucide-react";
-import { useState } from "react";
 import type { ProductCardProps } from "../../types/marketplace";
+import { useCheckoutStore } from "../../lib/store/checkoutStore";
 
 const badgeStyles = {
   green: "bg-forest-50 text-forest-700 border-forest-200",
@@ -10,7 +10,26 @@ const badgeStyles = {
 };
 
 export default function ProductCard({ product, featured, onSelect, selected }: ProductCardProps) {
-  const [qty, setQty] = useState(0);
+  const { items, addItem, updateQuantity } = useCheckoutStore();
+  const cartItem = items.find(i => i.id === product.id.toString());
+  const qty = cartItem?.quantity || 0;
+
+  const handleAdd = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    addItem({
+      id: product.id.toString(),
+      name: product.name,
+      farm: product.farm,
+      price: parseFloat(product.price.replace('₦', '')),
+      unit: product.unit || 'ea',
+      image: product.image || '',
+    });
+  };
+
+  const handleUpdateQty = (e: React.MouseEvent, newQty: number) => {
+    e.stopPropagation();
+    updateQuantity(product.id.toString(), newQty);
+  };
 
   return (
     <div
@@ -74,7 +93,7 @@ export default function ProductCard({ product, featured, onSelect, selected }: P
 
           {qty === 0 ? (
             <button
-              onClick={(e) => { e.stopPropagation(); setQty(1); }}
+              onClick={handleAdd}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-forest-600 hover:bg-forest-700 text-white text-xs font-semibold transition-colors"
             >
               <ShoppingCart size={12} />
@@ -82,11 +101,11 @@ export default function ProductCard({ product, featured, onSelect, selected }: P
             </button>
           ) : (
             <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-              <button onClick={() => setQty(q => Math.max(0, q - 1))} className="p-1 rounded-md bg-stone-100 hover:bg-stone-200 text-stone-600 transition-colors">
+              <button onClick={(e) => handleUpdateQty(e, Math.max(0, qty - 1))} className="p-1 rounded-md bg-stone-100 hover:bg-stone-200 text-stone-600 transition-colors">
                 <Minus size={12} />
               </button>
               <span className="text-sm font-semibold text-stone-900 w-4 text-center">{qty}</span>
-              <button onClick={() => setQty(q => q + 1)} className="p-1 rounded-md bg-forest-600 hover:bg-forest-700 text-white transition-colors">
+              <button onClick={(e) => handleUpdateQty(e, qty + 1)} className="p-1 rounded-md bg-forest-600 hover:bg-forest-700 text-white transition-colors">
                 <Plus size={12} />
               </button>
             </div>

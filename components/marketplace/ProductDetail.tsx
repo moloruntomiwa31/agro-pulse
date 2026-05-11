@@ -73,7 +73,6 @@ export default function ProductDetail({ product, onClose }: ProductDetailProps) 
           </div>
         )}
 
-        {/* Price & CTA */}
         <div className="mt-auto pt-2 border-t border-stone-200">
           <div className="flex items-baseline gap-1 mb-3">
             <span className="text-2xl font-bold text-stone-900">{product.price}</span>

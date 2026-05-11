@@ -10,8 +10,8 @@ import SubscriptionCard from "./SubscriptionCard";
 import { useProductStore } from "../../lib/store/productStore";
 
 export default function ProductGrid() {
-  const { products } = useProductStore();
   const [selected, setSelected] = useState<Product | null>(null);
+  const { filteredProducts } = useProductStore();
 
   return (
     <div className="flex flex-1 min-h-0">
@@ -20,7 +20,7 @@ export default function ProductGrid() {
         <DemandAlert />
 
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-          {products.map((p, i) => {
+          {filteredProducts().map((p, i) => {
             // Subscription card after index 3
             if (i === 4) {
               return (
@@ -47,11 +47,6 @@ export default function ProductGrid() {
           })}
         </div>
 
-        {/* New Listing CTA */}
-        <button className="mt-5 w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-stone-200 text-sm text-stone-500 hover:border-forest-500 hover:text-stone-700 transition-colors">
-          <Plus size={15} />
-          New Listing
-        </button>
       </div>
 
       {/* Detail panel */}

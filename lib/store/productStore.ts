@@ -3,17 +3,21 @@ import type { Product } from '../../types/marketplace';
 
 interface ProductState {
   products: Product[];
+  searchQuery: string;
+  activeFilter: string;
   setProducts: (products: Product[]) => void;
-  // We can add filtering/sorting states here later
+  setSearchQuery: (query: string) => void;
+  setActiveFilter: (filter: string) => void;
+  filteredProducts: () => Product[];
 }
 
 export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 1,
     name: "Heritage Roma Tomatoes",
-    farm: "Green Valley Farms, CA (17 mi)",
-    location: "Green Valley, CA",
-    price: "$3.50",
+    farm: "Green Valley Farms, Kano (17 mi)",
+    location: "Kano, NG",
+    price: "₦3500",
     unit: "kg",
     badge: "AI ↑ 5%",
     badgeColor: "gold",
@@ -26,8 +30,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: 2,
     name: "Organic Carrots",
     farm: "Sunpower Organics",
-    location: "Fresno, CA",
-    price: "$1.30",
+    location: "Jos, NG",
+    price: "₦1300",
     unit: "kg",
     badge: "Organic",
     badgeColor: "green",
@@ -40,8 +44,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: 3,
     name: "Bell Pepper Mix",
     farm: "Riverside Cooperative",
-    location: "Riverside, CA",
-    price: "$4.80",
+    location: "Kaduna, NG",
+    price: "₦4800",
     unit: "kg",
     badge: "RESTOCKED",
     badgeColor: "blue",
@@ -53,8 +57,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: 4,
     name: "Leafy Kale Bunch",
     farm: "River Heart Harvest",
-    location: "Salinas, CA",
-    price: "$2.35",
+    location: "Ibadan, NG",
+    price: "₦2350",
     unit: "ea",
     harvestDate: "Dec 14, 2025",
     available: "Bundles: 250g per bunch",
@@ -65,8 +69,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: 5,
     name: "Sweet Corn",
     farm: "Prairie Gold Farms",
-    location: "Stockton, CA",
-    price: "$0.80",
+    location: "Ogun, NG",
+    price: "₦800",
     unit: "ea",
     badge: "Seasonal",
     badgeColor: "gold",
@@ -78,8 +82,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: 6,
     name: "Zucchini",
     farm: "Hillside Gardens",
-    location: "Modesto, CA",
-    price: "$2.10",
+    location: "Enugu, NG",
+    price: "₦2100",
     unit: "kg",
     harvestDate: "Dec 11, 2025",
     available: "In stock",
@@ -90,8 +94,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: 7,
     name: "Organic Russet Potatoes",
     farm: "Green Acres Farm • Grade A",
-    location: "Idaho Falls, ID",
-    price: "$0.45",
+    location: "Plateau, NG",
+    price: "₦4500",
     unit: "kg",
     harvestDate: "Dec 05, 2025",
     available: "In stock",
@@ -102,8 +106,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: 8,
     name: "Red Bulb Onions",
     farm: "Valley Harvest Co-op",
-    location: "Walla Walla, WA",
-    price: "$1.20",
+    location: "Sokoto, NG",
+    price: "₦1200",
     unit: "kg",
     harvestDate: "Dec 01, 2025",
     available: "In stock",
@@ -113,8 +117,8 @@ export const INITIAL_PRODUCTS: Product[] = [
     id: 9,
     name: "Fine Green Beans",
     farm: "Sunrise Orchards",
-    location: "Portland, OR",
-    price: "$2.10",
+    location: "Benue, NG",
+    price: "₦2100",
     unit: "kg",
     harvestDate: "Dec 12, 2025",
     available: "In stock",
@@ -122,7 +126,30 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
 ];
 
-export const useProductStore = create<ProductState>((set) => ({
+export const useProductStore = create<ProductState>((set, get) => ({
   products: INITIAL_PRODUCTS,
+  searchQuery: '',
+  activeFilter: 'all',
+  
   setProducts: (products) => set({ products }),
+  setSearchQuery: (query) => set({ searchQuery: query }),
+  setActiveFilter: (filter) => set({ activeFilter: filter }),
+  
+  filteredProducts: () => {
+    const { products, searchQuery, activeFilter } = get();
+    let filtered = products;
+    
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(p => p.name.toLowerCase().includes(q) || p.farm.toLowerCase().includes(q));
+    }
+    
+    if (activeFilter === 'organic') {
+      filtered = filtered.filter(p => p.organic);
+    } else if (activeFilter === 'in_stock') {
+      filtered = filtered.filter(p => !p.outOfStock);
+    }
+    
+    return filtered;
+  }
 }));
