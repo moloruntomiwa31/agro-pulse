@@ -2,8 +2,23 @@
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { useCheckoutStore } from "../../../lib/store/checkoutStore";
 
+import EmptyState from "../../shared/EmptyState";
+import { ShoppingCart } from "lucide-react";
+
 export default function CartSummary() {
   const { items, updateQuantity, removeItem } = useCheckoutStore();
+
+  if (items.length === 0) {
+    return (
+      <EmptyState
+        icon={ShoppingCart}
+        title="Your cart is empty"
+        description="Looks like you haven't added any produce to your cart yet. Browse the marketplace to find fresh items."
+        actionLabel="Browse Marketplace"
+        actionHref="/marketplace"
+      />
+    );
+  }
 
   return (
     <section className="bg-white rounded-2xl p-6 border border-stone-200 shadow-sm">

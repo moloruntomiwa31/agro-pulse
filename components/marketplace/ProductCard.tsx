@@ -45,7 +45,7 @@ export default function ProductCard({ product, featured, onSelect, selected }: P
         <img
           src={product.image}
           alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-24 object-cover group-hover:scale-105 transition-transform duration-500"
         />
         {product.badge && (
           <span className={`absolute top-2 right-2 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${badgeStyles[product.badgeColor ?? "green"]}`}>
@@ -66,7 +66,7 @@ export default function ProductCard({ product, featured, onSelect, selected }: P
 
       {/* Body */}
       <div className="p-3">
-        <p className="text-sm font-semibold text-stone-900 leading-tight mb-0.5">{product.name}</p>
+        <p className="font-semibold text-stone-900 leading-tight mb-0.5">{product.name}</p>
         <p className="text-[11px] text-stone-500 mb-1 truncate">{product.farm}</p>
 
         {product.aiTag && (

@@ -1,9 +1,17 @@
 "use client";
 import { ShieldCheck } from "lucide-react";
 import { useCheckoutStore } from "../../../lib/store/checkoutStore";
+import { useRouter } from "next/navigation";
 
 export default function OrderSummary() {
-  const { subtotal, total, shipping, serviceFee } = useCheckoutStore();
+  const { subtotal, total, shipping, serviceFee, items, placeOrder } = useCheckoutStore();
+  const router = useRouter();
+
+  const handleCheckout = () => {
+    if (items.length === 0) return;
+    placeOrder();
+    router.push("/marketplace/orders");
+  };
 
   return (
     <div className="bg-white rounded-2xl p-6 border border-stone-200 shadow-sm">
@@ -30,7 +38,11 @@ export default function OrderSummary() {
         <span className="text-2xl font-black text-forest-950">₦{total().toLocaleString()}</span>
       </div>
 
-      <button className="w-full bg-forest-950 hover:bg-forest-900 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-[0.98]">
+      <button 
+        onClick={handleCheckout}
+        disabled={items.length === 0}
+        className="w-full bg-forest-950 hover:bg-forest-900 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+      >
         <ShieldCheck size={18} />
         Process Secure Payment
       </button>

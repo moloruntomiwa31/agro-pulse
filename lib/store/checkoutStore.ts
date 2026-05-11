@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { INITIAL_PRODUCTS } from './productStore';
 
 export type CartItem = {
   id: string;
@@ -11,10 +10,19 @@ export type CartItem = {
   image: string;
 };
 
+export type Order = {
+  id: string;
+  items: CartItem[];
+  total: number;
+  date: string;
+  status: 'In Transit' | 'Delivered' | 'Payment Secured' | 'Harvested & Packed';
+};
+
 export type SubscriptionOption = 'none' | 'daily' | 'weekly' | 'monthly';
 
 interface CheckoutState {
   items: CartItem[];
+  orders: Order[];
   shipping: number;
   serviceFee: number;
   subscriptionOption: SubscriptionOption;
@@ -28,29 +36,13 @@ interface CheckoutState {
   addItem: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
   removeItem: (id: string) => void;
   updateQuantity: (id: string, quantity: number) => void;
+  clearCart: () => void;
+  placeOrder: () => void;
 }
 
-// Map the products with IDs 7, 8, 9 to CartItems to match the initial mockup
-const initialCheckoutItems: CartItem[] = INITIAL_PRODUCTS
-  .filter(p => p.id === 7 || p.id === 8 || p.id === 9)
-  .map(p => {
-    // Determine a dummy quantity
-    const quantity = p.id === 7 ? 10 : p.id === 8 ? 30 : 20;
-    const basePrice = parseFloat(p.price.replace('₦', ''));
-    
-    return {
-      id: p.id.toString(),
-      name: p.name,
-      farm: p.farm,
-      price: basePrice,
-      unit: p.unit || 'kg',
-      quantity: quantity,
-      image: p.image || '',
-    };
-  });
-
 export const useCheckoutStore = create<CheckoutState>((set, get) => ({
-  items: initialCheckoutItems,
+  items: [],
+  orders: [],
   shipping: 12500,
   serviceFee: 5000,
   subscriptionOption: 'none',
@@ -60,6 +52,23 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
 
   setSubscriptionOption: (option) => set({ subscriptionOption: option }),
   
+  clearCart: () => set({ items: [] }),
+  
+  placeOrder: () => set((state) => {
+    if (state.items.length === 0) return state;
+    const newOrder: Order = {
+      id: `ORD-${Math.floor(Math.random() * 100000)}`,
+      items: [...state.items],
+      total: get().total(),
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      status: 'In Transit'
+    };
+    return {
+      orders: [newOrder, ...state.orders],
+      items: [],
+    };
+  }),
+
   addItem: (item) => set((state) => {
     const existing = state.items.find(i => i.id === item.id);
     if (existing) {

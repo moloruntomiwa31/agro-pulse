@@ -6,7 +6,6 @@
 
 @theme inline {
   /* Fonts */
-  --font-sans: var(--font-inter);
   --font-display: var(--font-plus-jakarta-sans);
 
   /* Brand Palette */
