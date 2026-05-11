@@ -6,6 +6,7 @@ interface ProductState {
   searchQuery: string;
   activeFilter: string;
   setProducts: (products: Product[]) => void;
+  addProduct: (product: Omit<Product, 'id'>) => void;
   setSearchQuery: (query: string) => void;
   setActiveFilter: (filter: string) => void;
   filteredProducts: () => Product[];
@@ -132,6 +133,9 @@ export const useProductStore = create<ProductState>((set, get) => ({
   activeFilter: 'all',
   
   setProducts: (products) => set({ products }),
+  addProduct: (product) => set((state) => ({
+    products: [{ ...product, id: state.products.length + 1 }, ...state.products]
+  })),
   setSearchQuery: (query) => set({ searchQuery: query }),
   setActiveFilter: (filter) => set({ activeFilter: filter }),
   

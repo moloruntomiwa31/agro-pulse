@@ -74,16 +74,23 @@ export default function Sidebar() {
 				<p className="px-3 pt-5 pb-1 text-[10px] font-semibold uppercase tracking-widest text-stone-400">
 					Preferences
 				</p>
-				{prefsNav.map(({ label, href, icon: Icon }) => (
-					<Link
-						key={href}
-						href={href}
-						className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-stone-600 hover:bg-stone-200 hover:text-stone-900 transition-colors"
-					>
-						<Icon size={16} />
-						{label}
-					</Link>
-				))}
+				{prefsNav.map(({ label, href, icon: Icon }) => {
+					const active = pathname === href;
+					return (
+						<Link
+							key={href}
+							href={href}
+							className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+								active
+									? "bg-forest-100 text-forest-800 font-bold text-sm"
+									: "text-sm font-medium text-stone-600 hover:bg-stone-200 hover:text-stone-900"
+							}`}
+						>
+							<Icon size={16} />
+							{label}
+						</Link>
+					);
+				})}
 			</nav>
 
 			{/* AI Upgrade Banner */}
