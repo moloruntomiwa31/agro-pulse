@@ -53,19 +53,6 @@ export default function Sidebar() {
         </Link>
       </div>
 
-      {/* Pro Badge */}
-      <div className="px-4 py-4 border-b border-stone-200">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-forest-900 text-white flex items-center justify-center font-bold text-xs shrink-0">
-            BP
-          </div>
-          <div>
-            <p className="text-xs font-bold text-stone-900">Babangida Poultry</p>
-            <p className="text-[10px] text-stone-500">Management Suite</p>
-          </div>
-        </div>
-      </div>
-
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {mainNav.map(({ label, href, icon: Icon }) => {
           const active = pathname.startsWith(href) && (href !== "/marketplace" || pathname === "/marketplace");

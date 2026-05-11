@@ -16,6 +16,17 @@ export default function TopBar() {
   return (
     <header className="sticky top-0 z-20 flex items-center justify-between px-6 py-3 border-b border-stone-200 bg-white/80 backdrop-blur-md">
 
+      {/* Pro Badge */}
+      <div className="flex items-center gap-3">
+        {/* <div className="w-8 h-8 rounded-full bg-forest-900 text-white flex items-center justify-center font-bold text-xs shrink-0">
+          BP
+        </div> */}
+        <div>
+          <p className="font-bold text-stone-900">Babangida Poultry</p>
+          <p className="text-[10px] text-stone-500">Management Suite</p>
+        </div>
+      </div>
+
       <div className="flex items-center gap-3 ml-auto">
         {/* Search */}
         <div className="relative hidden md:block">
