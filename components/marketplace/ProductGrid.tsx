@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { Plus } from "lucide-react";
 import type { Product } from "../../types/marketplace";
 import DemandAlert from "./DemandAlert";
@@ -24,15 +24,14 @@ export default function ProductGrid() {
             // Subscription card after index 3
             if (i === 4) {
               return (
-                <>
-                  <SubscriptionCard key="sub" />
+              <Fragment key={`sub-${p.id}`}>
+                  <SubscriptionCard />
                   <ProductCard
-                    key={p.id}
                     product={p}
                     onSelect={setSelected}
                     selected={selected?.id === p.id}
                   />
-                </>
+                </Fragment>
               );
             }
             return (
