@@ -23,16 +23,16 @@ const steps = [
 		icon: "🛒",
 		title: "Buyer Confirms Order",
 		description:
-			"Buyer places a secured order. Funds are held in escrow. A nearby verified rider is automatically assigned and dispatched to your farm.",
+			"Buyer places a secured order. Funds are held in escrow. A nearby verified transporter is automatically assigned and dispatched to your farm.",
 		color: "#7bbef0",
 	},
 	{
 		number: "04",
-		role: "Rider",
+		role: "Transporter",
 		icon: "🚴",
 		title: "Pickup & Delivery",
 		description:
-			"Rider picks up, tracks route live, and delivers to the buyer. Both parties get real-time updates. No calls, no confusion.",
+			"Transporter picks up, tracks route live, and delivers to the buyer. Both parties get real-time updates. No calls, no confusion.",
 		color: "#b07bf0",
 	},
 	{
@@ -41,7 +41,7 @@ const steps = [
 		icon: "💰",
 		title: "Instant Settlement",
 		description:
-			"On delivery confirmation, funds release automatically — farmer gets paid, rider gets their cut, platform fee is deducted. All transparent.",
+			"On delivery confirmation, funds release automatically — farmer gets paid, transporter gets their cut, platform fee is deducted. All transparent.",
 		color: "#e885a0",
 	},
 ];
@@ -67,8 +67,8 @@ export default function HowItWorksSection() {
 						<span className="text-gradient-gold">one day</span>
 					</h2>
 					<p className="mx-auto text-lg text-green-600 leading-relaxed max-w-lg">
-						A seamless end-to-end flow designed so farmers, buyers, and riders
-						spend less time on logistics and more time on growth.
+						A seamless end-to-end flow designed so farmers, buyers, and
+						transporters spend less time on logistics and more time on growth.
 					</p>
 				</div>
 

@@ -2,7 +2,7 @@ const footerLinks: Record<string, string[]> = {
 	Platform: [
 		"Marketplace",
 		"Demand Forecast",
-		"Rider Network",
+		"Transporter Network",
 		"Payments",
 		"Analytics",
 	],
@@ -48,7 +48,7 @@ export default function Footer() {
 						</div>
 						<p className="mb-6 max-w-60 text-sm leading-relaxed text-green-700">
 							The AI-powered agricultural marketplace connecting farmers,
-							buyers, and riders across Africa.
+							buyers, and transporters across Africa.
 						</p>
 						<div className="flex gap-3">
 							{socials.map((s) => (

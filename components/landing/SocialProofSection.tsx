@@ -1,7 +1,12 @@
 const stats = [
 	{ value: "2,400+", label: "Active Farmers", icon: "🌾", color: "#6db853" },
 	{ value: "₦480M+", label: "Produce Traded", icon: "💰", color: "#f0c04a" },
-	{ value: "340+", label: "Verified Riders", icon: "🚴", color: "#7bbef0" },
+	{
+		value: "340+",
+		label: "Verified Transporters",
+		icon: "🚗",
+		color: "#7bbef0",
+	},
 	{ value: "18min", label: "Avg. Match Time", icon: "⚡", color: "#b07bf0" },
 ];
 
@@ -26,7 +31,7 @@ const testimonials = [
 		quote:
 			"I do 12 deliveries a day. The route AI saves me fuel money, and the instant payout means I never chase anyone for payment.",
 		name: "Dele Abiodun",
-		role: "Delivery Rider, Ibadan",
+		role: "Transporter, Ibadan",
 		avatar: "DA",
 		avatarColor: "#b98600",
 	},
@@ -63,7 +68,7 @@ export default function SocialProofSection() {
 					<h2 className="font-display mt-4 text-[clamp(1.75rem,3.5vw,2.75rem)] font-black tracking-tight text-white/95">
 						Trusted by{" "}
 						<span className="text-gradient-green">
-							farmers, buyers &amp; riders
+							farmers, buyers &amp; transporters
 						</span>
 					</h2>
 				</div>

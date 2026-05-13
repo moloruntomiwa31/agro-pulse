@@ -14,12 +14,12 @@ export default function ProductGrid() {
   const { filteredProducts } = useProductStore();
 
   return (
-    <div className="flex flex-1 min-h-0">
+    <div className="flex flex-col md:flex-row min-h-0">
       {/* Main scrollable area */}
-      <div className="flex-1 overflow-y-auto px-6 py-5">
+      <div className="flex-1 overflow-y-auto px-4 py-5 md:px-6 md:py-5">
         <DemandAlert />
 
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredProducts().map((p, i) => {
             // Subscription card after index 3
             if (i === 4) {
@@ -50,7 +50,9 @@ export default function ProductGrid() {
 
       {/* Detail panel */}
       {selected && (
-        <ProductDetail product={selected} onClose={() => setSelected(null)} />
+        <div className="md:w-96 w-full border-l border-stone-200">
+          <ProductDetail product={selected} onClose={() => setSelected(null)} />
+        </div>
       )}
     </div>
   );

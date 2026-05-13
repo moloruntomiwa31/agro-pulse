@@ -2,7 +2,7 @@ export default function CTASection() {
 	const roles = [
 		{ label: "🌾 I'm a Farmer", id: "cta-farmer" },
 		{ label: "🛒 I'm a Buyer", id: "cta-buyer" },
-		{ label: "🚴 I'm a Rider", id: "cta-rider" },
+		{ label: "� I'm a Transporter", id: "cta-transporter" },
 	];
 
 	return (
@@ -41,8 +41,9 @@ export default function CTASection() {
 						</h2>
 
 						<p className="mx-auto mb-10 max-w-lg text-lg text-green-600 leading-relaxed">
-							Join 2,400+ farmers, buyers and riders already using AgroPulse to
-							eliminate waste, boost income, and build a smarter supply chain.
+							Join 2,400+ farmers, buyers and transporters already using
+							AgroPulse to eliminate waste, boost income, and build a smarter
+							supply chain.
 						</p>
 
 						{/* Email form */}

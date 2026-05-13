@@ -38,9 +38,9 @@ const roles = [
 		ctaId: "role-buyer-cta",
 	},
 	{
-		id: "rider",
-		emoji: "🚴",
-		title: "For Riders",
+		id: "transporter",
+		emoji: "🚗",
+		title: "For Transporters",
 		tagline: "More trips. Higher earnings.",
 		color: "#f0c04a",
 		bgGradient:
@@ -51,10 +51,10 @@ const roles = [
 			"Vehicle and insurance support program",
 			"Priority trips based on rating score",
 			"Flexible hours — ride when you want",
-			"Dedicated rider support line 24/7",
+			"Dedicated transporter support line 24/7",
 		],
-		cta: "Become a Rider",
-		ctaId: "role-rider-cta",
+		cta: "Become a Transporter",
+		ctaId: "role-transporter-cta",
 	},
 ];
 

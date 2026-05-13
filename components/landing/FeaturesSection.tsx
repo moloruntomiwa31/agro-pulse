@@ -14,7 +14,7 @@ const features = [
 		label: "Logistics",
 		title: "On-Demand Delivery",
 		description:
-			"Connect with vetted riders in your area instantly. Real-time GPS tracking, route optimisation, and delivery confirmation — all from one dashboard.",
+			"Connect with vetted transporters in your area instantly. Real-time GPS tracking, route optimisation, and delivery confirmation — all from one dashboard.",
 		stat: "< 40min",
 		statLabel: "avg. pickup time",
 		color: "#f0c04a",
@@ -24,7 +24,7 @@ const features = [
 		label: "Finance",
 		title: "Smart Payment Split",
 		description:
-			"Escrow-protected transactions with automatic split payments. Farmers receive funds on delivery confirmation, riders get paid instantly — zero disputes.",
+			"Escrow-protected transactions with automatic split payments. Farmers receive funds on delivery confirmation, transporters get paid instantly — zero disputes.",
 		stat: "₦0",
 		statLabel: "transaction fees",
 		color: "#7bbef0",

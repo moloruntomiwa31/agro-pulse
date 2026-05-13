@@ -94,12 +94,14 @@ export default function HeroSection() {
 							Where Farms Meet{" "}
 							<span className="text-gradient-green">Buyers &amp;</span>
 							<br />
-							<span className="text-gradient-gold">Riders — Instantly</span>
+							<span className="text-gradient-gold">
+								Transporters — Instantly
+							</span>
 						</h1>
 
 						<p className="mb-10 max-w-lg text-lg leading-relaxed text-green-200">
 							AgroPulse connects farmers directly with verified buyers and
-							on-demand delivery riders. AI forecasts demand, coordinates
+							on-demand delivery transporters. AI forecasts demand, coordinates
 							payments, and eliminates the middleman — so you earn more from
 							every harvest.
 						</p>
@@ -224,7 +226,9 @@ export default function HeroSection() {
 
 							{/* Bottom */}
 							<div className="mt-4 flex items-center justify-between border-t border-green-600/12 pt-4">
-								<span className="text-xs text-green-700">7 riders nearby</span>
+								<span className="text-xs text-green-700">
+									7 transporters nearby
+								</span>
 								<div className="flex items-center gap-1.5">
 									<div className="h-2 w-2 rounded-full bg-forest-300" />
 									<span className="text-xs font-semibold text-forest-300">
@@ -239,7 +243,7 @@ export default function HeroSection() {
 							<span className="text-2xl">🚴</span>
 							<div>
 								<div className="text-xs font-semibold text-green-700">
-									Rider Matched
+									Transporter Matched
 								</div>
 								<div className="text-sm font-bold text-white/95">
 									2.4 km away

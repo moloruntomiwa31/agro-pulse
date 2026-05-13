@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-type Role = "farmer" | "buyer" | "rider";
+type Role = "farmer" | "buyer" | "transporter";
 
 const roleConfig = {
 	farmer: {
@@ -16,9 +16,9 @@ const roleConfig = {
 		title: "Buyer",
 		fields: ["Business Name", "Location (City)", "Purchase Volume"],
 	},
-	rider: {
-		emoji: "🚴",
-		title: "Rider",
+	transporter: {
+		emoji: "🚗",
+		title: "Transporter",
 		fields: ["Vehicle Type", "Location (City)", "License Number"],
 	},
 };
@@ -99,7 +99,7 @@ export default function SignUpPage() {
 			{/* ─── STEP 0: Role Selection ─── */}
 			{step === 0 && (
 				<div className="flex flex-col gap-4">
-					{(["farmer", "buyer", "rider"] as Role[]).map((r) => {
+					{(["farmer", "buyer", "transporter"] as Role[]).map((r) => {
 						const rc = roleConfig[r];
 						const selected = role === r;
 						return (
@@ -130,7 +130,8 @@ export default function SignUpPage() {
 											"Sell your produce directly to verified buyers"}
 										{r === "buyer" &&
 											"Source fresh produce straight from local farms"}
-										{r === "rider" && "Earn by delivering farm-fresh goods"}
+										{r === "transporter" &&
+											"Earn by delivering farm-fresh goods"}
 									</div>
 								</div>
 								{/* Radio indicator */}
