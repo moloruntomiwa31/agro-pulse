@@ -8,6 +8,7 @@ export type CartItem = {
   unit: string;
   quantity: number;
   image: string;
+  farmerId?: string;
 };
 
 export type Order = {

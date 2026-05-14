@@ -1,29 +1,66 @@
-import { create } from "zustand";
+import { create } from 'zustand';
 
 export type ToastVariant = "success" | "error" | "info" | "default";
+export type ToastType = ToastVariant;
 
 export interface Toast {
   id: string;
   message: string;
   variant: ToastVariant;
-  duration: number; // ms
+  duration: number;
 }
 
-interface ToastStore {
+interface ToastState {
+  // Single toast support
+  message: string | null;
+  type: ToastType;
+  showToast: (message: string, type?: ToastType) => void;
+  hideToast: () => void;
+
+  // Multi-toast queue support (for Toaster.tsx)
   toasts: Toast[];
-  add: (toast: Omit<Toast, "id">) => string;
+  add: (message: string, variant?: ToastVariant, duration?: number) => void;
   remove: (id: string) => void;
 }
 
-let counter = 0;
-
-export const useToastStore = create<ToastStore>((set) => ({
+export const useToastStore = create<ToastState>((set) => ({
+  message: null,
+  type: 'info',
   toasts: [],
-  add: (toast) => {
-    const id = `toast-${++counter}`;
-    set((s) => ({ toasts: [...s.toasts, { ...toast, id }] }));
-    return id;
+
+  showToast: (message, type = 'info') => {
+    const id = Math.random().toString(36).substring(2, 9);
+    set((state) => ({
+      message,
+      type,
+      toasts: [...state.toasts, { id, message, variant: type, duration: 4000 }]
+    }));
+
+    setTimeout(() => {
+      set((state) => ({
+        message: state.message === message ? null : state.message,
+        toasts: state.toasts.filter(t => t.id !== id)
+      }));
+    }, 4000);
   },
+
+  hideToast: () => set({ message: null }),
+
+  add: (message, variant = "default", duration = 4000) => {
+    const id = Math.random().toString(36).substring(2, 9);
+    set((state) => ({
+      toasts: [...state.toasts, { id, message, variant, duration }]
+    }));
+
+    setTimeout(() => {
+      set((state) => ({
+        toasts: state.toasts.filter((t) => t.id !== id),
+      }));
+    }, duration);
+  },
+
   remove: (id) =>
-    set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
+    set((state) => ({
+      toasts: state.toasts.filter((t) => t.id !== id),
+    })),
 }));

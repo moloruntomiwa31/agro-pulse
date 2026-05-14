@@ -4,8 +4,7 @@ import { useProductStore } from "../../lib/store/productStore";
 import Link from "next/link";
 
 export default function TopBar() {
-	const { searchQuery, setSearchQuery, activeFilter, setActiveFilter } =
-		useProductStore();
+	const { searchQuery, setSearchQuery } = useProductStore();
 
 	return (
 		<header className="sticky top-0 z-20 flex items-center justify-between px-6 py-3 border-b border-stone-200 bg-white/80 backdrop-blur-md">
@@ -35,21 +34,10 @@ export default function TopBar() {
 					/>
 				</div>
 
-				{/* Filters */}
-				<select
-					value={activeFilter}
-					onChange={(e) => setActiveFilter(e.target.value)}
-					className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-stone-200 text-xs font-medium text-stone-600 bg-white hover:bg-stone-50 transition-colors focus:outline-none focus:border-forest-500"
-				>
-					<option value="all">All Items</option>
-					<option value="organic">Organic Only</option>
-					<option value="in_stock">In Stock</option>
-				</select>
-
-				<button className="relative p-2 rounded-lg hover:bg-stone-100 text-stone-600 transition-colors">
+				<Link href="/marketplace/settings?tab=notifications" className="relative p-2 rounded-lg hover:bg-stone-100 text-stone-600 transition-colors">
 					<Bell size={16} />
 					<span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-forest-500" />
-				</button>
+				</Link>
 				<Link href="/marketplace/settings" className="p-1.5 rounded-full bg-forest-100 text-forest-700 hover:bg-forest-200 transition-colors">
 					<User size={22} />
 				</Link>
@@ -57,3 +45,4 @@ export default function TopBar() {
 		</header>
 	);
 }
+

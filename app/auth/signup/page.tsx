@@ -2,45 +2,99 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSignUp } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/useToast";
+import { UserRole } from "@/lib/store/authStore";
 
-type Role = "farmer" | "buyer" | "transporter";
+type RoleKey = "farmer" | "buyer" | "transporter";
 
-const roleConfig = {
+const roleConfig: Record<
+	RoleKey,
+	{ emoji: string; title: string; apiRole: UserRole; description: string }
+> = {
 	farmer: {
 		emoji: "🌾",
 		title: "Farmer",
-		fields: ["Farm Name", "Location (State)", "Primary Crop"],
+		apiRole: "SELLER",
+		description: "Sell your produce directly to verified buyers",
 	},
 	buyer: {
 		emoji: "🛒",
 		title: "Buyer",
-		fields: ["Business Name", "Location (City)", "Purchase Volume"],
+		apiRole: "BUYER",
+		description: "Source fresh produce straight from local farms",
 	},
 	transporter: {
 		emoji: "🚗",
 		title: "Transporter",
-		fields: ["Vehicle Type", "Location (City)", "License Number"],
+		apiRole: "TRANSPORTER",
+		description: "Earn by delivering farm-fresh goods",
 	},
 };
 
 export default function SignUpPage() {
 	const [step, setStep] = useState(0);
-	const [role, setRole] = useState<Role>("farmer");
+	const [role, setRole] = useState<RoleKey>("farmer");
 	const [form, setForm] = useState({
-		name: "",
+		full_name: "",
 		email: "",
+		phone_number: "",
 		password: "",
-		field1: "",
-		field2: "",
-		field3: "",
+		password_confirm: "",
 	});
+	const [error, setError] = useState("");
+	const { toast } = useToast();
+	const signUpMutation = useSignUp();
 
-	const next = () => setStep((s) => Math.min(s + 1, 2));
+	const next = () => setStep((s) => Math.min(s + 1, 1));
 	const back = () => setStep((s) => Math.max(s - 1, 0));
-	const update = (key: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
+	const update = (key: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
 		setForm({ ...form, [key]: e.target.value });
+		setError("");
+	};
 
 	const config = roleConfig[role];
+
+	const handleSignUp = async () => {
+		// Validation
+		if (!form.full_name.trim()) {
+			setError("Full name is required");
+			return;
+		}
+		if (!form.email.trim()) {
+			setError("Email is required");
+			return;
+		}
+		if (!form.phone_number.trim()) {
+			setError("Phone number is required");
+			return;
+		}
+		if (form.password.length < 8) {
+			setError("Password must be at least 8 characters");
+			return;
+		}
+		if (form.password !== form.password_confirm) {
+			setError("Passwords do not match");
+			return;
+		}
+
+		try {
+			await signUpMutation.mutateAsync({
+				full_name: form.full_name,
+				email: form.email,
+				phone_number: form.phone_number,
+				password: form.password,
+				password_confirm: form.password_confirm,
+				role: config.apiRole,
+				is_active: true,
+			});
+		} catch (err) {
+			const message =
+				err instanceof Error ? err.message : "Failed to create account";
+			setError(message);
+			toast.error(message);
+		}
+	};
 
 	return (
 		<div>
@@ -68,14 +122,12 @@ export default function SignUpPage() {
 				<p className="text-base text-green-700">
 					{step === 0 && "Choose how you want to use AgroPulse"}
 					{step === 1 && "Enter your account details"}
-					{step === 2 &&
-						`Tell us about your ${config.title.toLowerCase()} profile`}
 				</p>
 			</div>
 
 			{/* Step indicator */}
 			<div className="mb-8 flex gap-2">
-				{["Role", "Account", "Profile"].map((label, i) => (
+				{["Role", "Details"].map((label, i) => (
 					<div key={label} className="flex-1">
 						<div
 							className="mb-1.5 h-0.75 rounded-sm bg-stone-200 transition-all duration-300"
@@ -99,7 +151,7 @@ export default function SignUpPage() {
 			{/* ─── STEP 0: Role Selection ─── */}
 			{step === 0 && (
 				<div className="flex flex-col gap-4">
-					{(["farmer", "buyer", "transporter"] as Role[]).map((r) => {
+					{(["farmer", "buyer", "transporter"] as RoleKey[]).map((r) => {
 						const rc = roleConfig[r];
 						const selected = role === r;
 						return (
@@ -177,8 +229,8 @@ export default function SignUpPage() {
 							id="signup-name"
 							type="text"
 							placeholder="John Doe"
-							value={form.name}
-							onChange={update("name")}
+							value={form.full_name}
+							onChange={update("full_name")}
 							required
 							className="auth-input"
 						/>
@@ -198,6 +250,20 @@ export default function SignUpPage() {
 						/>
 					</div>
 					<div>
+						<label htmlFor="signup-phone" className="auth-label">
+							Phone number
+						</label>
+						<input
+							id="signup-phone"
+							type="tel"
+							placeholder="+1 (555) 123-4567"
+							value={form.phone_number}
+							onChange={update("phone_number")}
+							required
+							className="auth-input"
+						/>
+					</div>
+					<div>
 						<label htmlFor="signup-password" className="auth-label">
 							Password
 						</label>
@@ -211,65 +277,26 @@ export default function SignUpPage() {
 							className="auth-input"
 						/>
 					</div>
-
-					<div className="flex gap-3 pt-2">
-						<button type="button" onClick={back} className="auth-back-btn">
-							Back
-						</button>
-						<button
-							type="button"
-							onClick={next}
-							className="auth-submit-btn flex-1"
-						>
-							Continue
-							<svg
-								width="16"
-								height="16"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								strokeWidth="2.5"
-							>
-								<path
-									d="M5 12h14M12 5l7 7-7 7"
-									strokeLinecap="round"
-									strokeLinejoin="round"
-								/>
-							</svg>
-						</button>
-					</div>
-				</div>
-			)}
-
-			{/* ─── STEP 2: Profile Details ─── */}
-			{step === 2 && (
-				<div className="flex flex-col gap-4.5">
-					<div className="flex items-center gap-3 rounded-xl border border-green-600/20 bg-green-50/50 px-4 py-3">
-						<span className="text-2xl">{config.emoji}</span>
-						<span className="text-sm font-semibold text-forest-600">
-							Setting up your {config.title} profile
-						</span>
+					<div>
+						<label htmlFor="signup-password-confirm" className="auth-label">
+							Confirm password
+						</label>
+						<input
+							id="signup-password-confirm"
+							type="password"
+							placeholder="Confirm your password"
+							value={form.password_confirm}
+							onChange={update("password_confirm")}
+							required
+							className="auth-input"
+						/>
 					</div>
 
-					{config.fields.map((field, i) => (
-						<div key={field}>
-							<label htmlFor={`signup-field-${i}`} className="auth-label">
-								{field}
-							</label>
-							<input
-								id={`signup-field-${i}`}
-								type="text"
-								placeholder={`Enter ${field.toLowerCase()}`}
-								value={
-									i === 0 ? form.field1 : i === 1 ? form.field2 : form.field3
-								}
-								onChange={update(
-									i === 0 ? "field1" : i === 1 ? "field2" : "field3",
-								)}
-								className="auth-input"
-							/>
+					{error && (
+						<div className="rounded-md bg-red-50 p-3">
+							<p className="text-sm font-medium text-red-800">{error}</p>
 						</div>
-					))}
+					)}
 
 					<div className="flex gap-3 pt-2">
 						<button type="button" onClick={back} className="auth-back-btn">
@@ -277,10 +304,11 @@ export default function SignUpPage() {
 						</button>
 						<button
 							type="button"
-							onClick={() => alert("Account created! 🎉")}
+							onClick={handleSignUp}
 							className="auth-submit-btn flex-1"
+							disabled={signUpMutation.isPending}
 						>
-							Create Account
+							{signUpMutation.isPending ? "Creating..." : "Create Account"}
 							<svg
 								width="16"
 								height="16"
