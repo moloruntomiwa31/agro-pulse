@@ -5,8 +5,10 @@ import { useProduce } from "@/hooks/useProduce";
 import { produceDetailToProduct } from "@/types/marketplace";
 import { useCheckoutStore } from "@/lib/store/checkoutStore";
 import { useRouter } from "next/navigation";
+import DemandForecastSection from "./DemandForecastSection";
 
 export default function ProductDetail({ product, onClose }: ProductDetailProps) {
+
   const { data: produce, isLoading } = useProduce(product.id);
   const addItem = useCheckoutStore((state) => state.addItem);
   const router = useRouter();
@@ -106,6 +108,9 @@ export default function ProductDetail({ product, onClose }: ProductDetailProps) 
             <span className="text-xs text-forest-700">Certified Organic · Regenerative Farm</span>
           </div>
         )}
+
+        <DemandForecastSection produceId={product.id} />
+
 
         <div className="mt-auto pt-2 border-t border-stone-200">
           <div className="flex items-baseline gap-1 mb-3">

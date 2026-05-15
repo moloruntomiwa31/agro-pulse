@@ -6,7 +6,7 @@ import { User, Bell, Shield, MapPin, CreditCard, Repeat } from "lucide-react";
 export default function BuyerSettings() {
   const tabs: SettingsTab[] = [
     { id: 'profile', label: 'My Profile', icon: User },
-    { id: 'subscriptions', label: 'Produce Subscriptions', icon: Repeat },
+    { id: 'subscriptions', label: 'Subscriptions', icon: Repeat },
     { id: 'addresses', label: 'Delivery Addresses', icon: MapPin },
     { id: 'payment', label: 'Payment Methods', icon: CreditCard },
     { id: 'notifications', label: 'Notifications', icon: Bell },

@@ -1,7 +1,10 @@
 "use client";
 import { useMyOrders } from "@/hooks/useOrder";
 import EmptyState from "@/components/shared/EmptyState";
-import { ClipboardList, Loader2 } from "lucide-react";
+import { ClipboardList, Loader2, BrainCircuit } from "lucide-react";
+import BuyerReturnCell from "./BuyerReturnCell";
+
+
 
 export default function RecentOrders() {
   const { data: orders, isLoading, isError } = useMyOrders();
@@ -39,7 +42,9 @@ export default function RecentOrders() {
               <th className="text-[10px] font-bold text-stone-400 uppercase tracking-widest pb-4 border-b border-stone-100">Buyer</th>
               <th className="text-[10px] font-bold text-stone-400 uppercase tracking-widest pb-4 border-b border-stone-100">Amount</th>
               <th className="text-[10px] font-bold text-stone-400 uppercase tracking-widest pb-4 border-b border-stone-100">Status</th>
+              <th className="text-[10px] font-bold text-stone-400 uppercase tracking-widest pb-4 border-b border-stone-100">AI Return Prediction</th>
               <th className="text-[10px] font-bold text-stone-400 uppercase tracking-widest pb-4 border-b border-stone-100">Settlement</th>
+
             </tr>
           </thead>
           <tbody className="text-sm">
@@ -62,12 +67,16 @@ export default function RecentOrders() {
                     </span>
                   </td>
                   <td className="py-4">
+                    <BuyerReturnCell buyerId={order.buyer} produceId="66c40e53-488b-491d-9e6e-21443428989a" />
+                  </td>
+                  <td className="py-4">
                     <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest border ${
                       isPaid ? "bg-forest-100 text-forest-700 border-forest-200" : "bg-orange-100 text-orange-700 border-orange-200"
                     }`}>
                       {isPaid ? "Escrow Secured" : "Pending"}
                     </span>
                   </td>
+
                 </tr>
               );
             })}
@@ -77,4 +86,5 @@ export default function RecentOrders() {
     </div>
   );
 }
+
 
