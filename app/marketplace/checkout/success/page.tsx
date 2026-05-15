@@ -3,17 +3,27 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useVerifyPayment } from "@/hooks/usePayment";
+import type { Payment } from "@/types/payment";
+import type { LucideProps } from "lucide-react";
+
 
 import { Loader2, CheckCircle2, XCircle, ArrowRight, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { useToastStore } from "@/lib/store/toastStore";
+
+export interface SettingsTab {
+	id: string;
+	label: string;
+	icon: React.ComponentType<LucideProps>;
+}
 
 export default function PaymentSuccessPage() {
 	const searchParams = useSearchParams();
 	const paymentId = searchParams.get("reference");
 	const { mutateAsync: verifyPayment, isPending } = useVerifyPayment();
 	const [status, setStatus] = useState<"verifying" | "success" | "error">("verifying");
-	const [verifiedPayment, setVerifiedPayment] = useState<any>(null);
+	const [verifiedPayment, setVerifiedPayment] = useState<Payment | null>(null);
+
 	const showToast = useToastStore((state) => state.showToast);
 	const router = useRouter();
 	const [countdown, setCountdown] = useState(5);

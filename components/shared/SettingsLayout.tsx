@@ -1,23 +1,29 @@
 "use client";
 import { useState, useEffect } from "react";
-import { User, Bell, Shield, CreditCard, MapPin, Building, Banknote, Loader2, Repeat, Calendar, Pause, Play, XCircle, Clock } from "lucide-react";
+import { User, Bell, Shield, CreditCard, MapPin, Building, Banknote, Loader2, Repeat, Calendar, Pause, Play, XCircle, Clock, LucideIcon } from "lucide-react";
+
 
 import { useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/lib/store/authStore";
 import { updateUser } from "@/lib/api/auth";
 import { useToastStore } from "@/lib/store/toastStore";
+import { useMySubscriptions, usePauseSubscription, useResumeSubscription, useCancelSubscription } from "@/hooks/useSubscription";
 import ToastContainer from "@/components/shared/ToastContainer";
 
-export type TabType = 'profile' | 'notifications' | 'security' | 'payment' | 'addresses' | 'farm' | 'payouts' | 'vehicle';
 
-export type TabType = 'profile' | 'notifications' | 'security' | 'payment' | 'addresses' | 'farm' | 'payouts' | 'subscriptions';
+
+
+export type TabType = 'profile' | 'notifications' | 'security' | 'payment' | 'addresses' | 'farm' | 'payouts' | 'subscriptions' | 'vehicle';
+
 
 
 export interface SettingsTab {
   id: TabType;
   label: string;
-  icon: any;
+  icon: LucideIcon;
 }
+
+
 
 export function ProfileTab() {
   const user = useAuthStore((state) => state.user);
@@ -215,7 +221,7 @@ export function AddressesTab() {
   );
 }
 
-import { useMySubscriptions, usePauseSubscription, useResumeSubscription, useCancelSubscription } from "@/hooks/useSubscription";
+
 
 export function SubscriptionsTab() {
   const { data: subs, isLoading } = useMySubscriptions();
@@ -361,7 +367,8 @@ export function GenericSettingsLayout({ title, description, tabs }: { title: str
             {activeTab === 'notifications' && <NotificationsTab />}
             {activeTab === 'addresses' && <AddressesTab />}
             {activeTab === 'subscriptions' && <SubscriptionsTab />}
-            {['security', 'payment', 'farm', 'payouts'].includes(activeTab) && (
+            {['security', 'payment', 'farm', 'payouts', 'vehicle'].includes(activeTab) && (
+
 
                <div className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-stone-200 rounded-2xl">
                  <p className="text-sm font-bold text-stone-400 mb-1">Coming Soon</p>

@@ -26,6 +26,8 @@ import { useToastStore } from "../../../lib/store/toastStore";
 import EmptyState from "../../../components/shared/EmptyState";
 
 import type { Order, OrderStatus } from "../../../types/order";
+import type { Payment } from "../../../types/payment";
+
 
 const STATUS_STEPS: { status: OrderStatus; label: string; sub: string }[] = [
 	{ status: "PENDING", label: "Order Placed", sub: "Awaiting payment" },
@@ -70,8 +72,9 @@ interface OrderCardProps {
 	order: Order;
 	isPaymentInitialized?: boolean;
 	isPaymentConfirmed?: boolean;
-	payments: any[];
+	payments: Payment[];
 }
+
 
 function OrderCard({
 	order,
