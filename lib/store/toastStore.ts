@@ -30,11 +30,13 @@ export const useToastStore = create<ToastState>((set) => ({
 
   showToast: (message, type = 'info') => {
     const id = Math.random().toString(36).substring(2, 9);
+    const safeMessage = typeof message === 'object' ? JSON.stringify(message) : String(message);
     set((state) => ({
-      message,
+      message: safeMessage,
       type,
-      toasts: [...state.toasts, { id, message, variant: type, duration: 4000 }]
+      toasts: [...state.toasts, { id, message: safeMessage, variant: type, duration: 4000 }]
     }));
+
 
     setTimeout(() => {
       set((state) => ({
@@ -48,9 +50,11 @@ export const useToastStore = create<ToastState>((set) => ({
 
   add: (message, variant = "default", duration = 4000) => {
     const id = Math.random().toString(36).substring(2, 9);
+    const safeMessage = typeof message === 'object' ? JSON.stringify(message) : String(message);
     set((state) => ({
-      toasts: [...state.toasts, { id, message, variant, duration }]
+      toasts: [...state.toasts, { id, message: safeMessage, variant, duration }]
     }));
+
 
     setTimeout(() => {
       set((state) => ({

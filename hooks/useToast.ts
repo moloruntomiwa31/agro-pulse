@@ -4,11 +4,11 @@ const DEFAULT_DURATION = 4000;
 
 function fire(variant: ToastVariant) {
   return (message: string, duration = DEFAULT_DURATION) => {
-    const { add, remove } = useToastStore.getState();
-    const id = add({ message, variant, duration });
-    setTimeout(() => remove(id), duration);
+    const { add } = useToastStore.getState();
+    add(message, variant, duration);
   };
 }
+
 
 export function useToast() {
   const toast = {

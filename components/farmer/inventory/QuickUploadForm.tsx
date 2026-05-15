@@ -4,17 +4,22 @@ import { LayoutGrid, Calendar } from "lucide-react";
 import { useProductStore } from "@/lib/store/productStore";
 import { useInventoryStore } from "@/lib/store/inventoryStore";
 import { useAuthStore } from "@/lib/store/authStore";
+import { useCreateProduce } from "@/hooks/useProduce";
+import { useToast } from "@/hooks/useToast";
+
 
 
 export default function QuickUploadForm() {
-  const { addProduct } = useProductStore();
-  const { addItem, setAddModalOpen } = useInventoryStore();
+  const { setAddModalOpen } = useInventoryStore();
   const user = useAuthStore((state) => state.user);
-  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+  const createProduce = useCreateProduce();
 
+  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
@@ -23,51 +28,33 @@ export default function QuickUploadForm() {
     const category = formData.get("category") as string;
     const qty = formData.get("qty") as string;
     const price = formData.get("price") as string;
-    const date = formData.get("date") as string;
-
-    const formattedDate = new Date(date).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
-    const newId = `INV-${Math.floor(Math.random() * 9000) + 1000}`;
-
-    // Simulate network delay
-    setTimeout(() => {
-      // 1. Add to Marketplace
-      addProduct({
-        name: name,
-        farm: user?.farmer_profile?.farm_name || "Babangida Poultry",
-        farmerId: user?.farmer_profile?.id || "default-farmer",
-        location: user?.farmer_profile?.farm_location || "Kano, NG",
-        price: `₦${parseFloat(price).toLocaleString()}`,
-        unit: "kg",
-        badge: "NEW",
-        badgeColor: "green",
-        harvestDate: formattedDate,
-        available: `${qty} kg total`,
-        image: "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=400&q=70",
-        organic: true,
+    
+    try {
+      await createProduce.mutateAsync({
+        name,
+        category: category.toUpperCase(),
+        price: price,
+        stock_quantity: parseInt(qty),
+        availability_status: "AVAILABLE",
+        description: `Freshly harvested ${name}.`,
       });
 
-
-      // 2. Add to Inventory
-      addItem({
-        id: newId,
-        name: name,
-        type: category,
-        status: "Available",
-        qty: `${qty} kg`,
-        date: formattedDate,
-        listedOnMarketplace: true
-      });
-
-      setLoading(false);
       setSuccess(true);
+      toast.success("Produce listed successfully!");
       (e.target as HTMLFormElement).reset();
 
       setTimeout(() => {
         setSuccess(false);
-        setAddModalOpen(false); // Close modal automatically
+        setAddModalOpen(false);
       }, 1500);
-    }, 800);
+    } catch (error: any) {
+      console.error("Failed to list produce:", error);
+      toast.error(error.message || "Failed to list produce");
+    } finally {
+      setLoading(false);
+    }
   };
+
 
   return (
     <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-6 lg:col-span-1">

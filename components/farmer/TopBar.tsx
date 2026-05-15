@@ -1,11 +1,17 @@
 "use client";
 import { Search, Bell, User } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+import { useAuthStore } from "@/lib/store/authStore";
+
 
 export default function TopBar() {
   const pathname = usePathname();
+  const user = useAuthStore((state) => state.user);
   
   let title = "Farmer Dashboard";
+
   let description = "AI-driven predictive analysis and real-time logistics tracking.";
   
   if (pathname.includes("/inventory")) {
@@ -22,9 +28,10 @@ export default function TopBar() {
           BP
         </div> */}
         <div>
-          <p className="font-bold text-stone-900">Babangida Poultry</p>
-          <p className="text-[10px] text-stone-500">Management Suite</p>
+          <p className="font-bold text-stone-900 leading-none">{user?.full_name || 'Farmer'}</p>
+          <p className="text-[10px] text-stone-500">AgroPulse Pro Suite</p>
         </div>
+
       </div>
 
       <div className="flex items-center gap-3 ml-auto">
@@ -42,9 +49,13 @@ export default function TopBar() {
           <Bell size={16} />
           <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-forest-500" />
         </button>
-        <button className="p-1.5 rounded-full bg-forest-100 text-forest-700 hover:bg-forest-200 transition-colors">
+        <Link 
+          href="/farmer/settings"
+          className="p-1.5 rounded-full bg-forest-100 text-forest-700 hover:bg-forest-200 transition-colors"
+        >
           <User size={15} />
-        </button>
+        </Link>
+
       </div>
     </header>
   );

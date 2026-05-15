@@ -106,28 +106,29 @@ export async function apiRequest<T>(
 
 		if (typeof errorData === "string") {
 			message = errorData;
+		} else if (errorData.non_field_errors) {
+			message = Array.isArray(errorData.non_field_errors)
+				? errorData.non_field_errors.join(", ")
+				: errorData.non_field_errors;
 		} else if (errorData.detail) {
-			message = errorData.detail;
+			message = typeof errorData.detail === 'object' ? JSON.stringify(errorData.detail) : errorData.detail;
 		} else if (errorData.message) {
-			message = errorData.message;
+			message = typeof errorData.message === 'object' ? JSON.stringify(errorData.message) : errorData.message;
 		} else if (Array.isArray(errorData)) {
-			// Handle array of errors
 			message = errorData
-				.map((e: any) => e.detail || e.message || String(e))
+				.map((e: any) => typeof e === 'object' ? JSON.stringify(e) : String(e))
 				.join(", ");
-		} else if (errorData.raw) {
-			message = `${response.status}: ${errorData.raw.substring(0, 200)}`;
-		} else if (Object.keys(errorData).length > 0) {
-			// Handle object with field errors
+		} else if (Object.keys(errorData).length > 0 && !errorData.raw) {
 			message = Object.entries(errorData)
 				.map(([field, value]: [string, any]) => {
-					if (Array.isArray(value)) {
-						return `${field}: ${value.join(", ")}`;
-					}
-					return `${field}: ${value}`;
+					const val = Array.isArray(value) ? value.join(", ") : (typeof value === 'object' ? JSON.stringify(value) : String(value));
+					return `${field}: ${val}`;
 				})
 				.join("; ");
+		} else if (errorData.raw && errorData.raw.length > 0) {
+			message = errorData.raw.substring(0, 200);
 		}
+
 
 		throw new Error(message);
 	}

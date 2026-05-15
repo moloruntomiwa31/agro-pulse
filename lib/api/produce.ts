@@ -17,7 +17,6 @@ export async function getProduces(
 	if (filters?.category) params.set("category", filters.category);
 	if (filters?.availability_status)
 		params.set("availability_status", filters.availability_status);
-	if (filters?.farmer) params.set("farmer", filters.farmer);
 	if (filters?.search) params.set("search", filters.search);
 	if (filters?.ordering) params.set("ordering", filters.ordering);
 
@@ -25,6 +24,11 @@ export async function getProduces(
 	const endpoint = query ? `/api/produces/?${query}` : `/api/produces/`;
 	return apiRequest<ProduceListResponse>(endpoint);
 }
+
+export async function getMyProduces(): Promise<ProduceListResponse> {
+	return apiRequest<ProduceListResponse>("/api/produces/my_produces/");
+}
+
 
 export async function getProduce(id: string): Promise<ProduceDetail> {
 	return apiRequest<ProduceDetail>(`/api/produces/${id}/`);

@@ -14,8 +14,11 @@ import {
 	ArrowLeftRight,
 	Menu,
 	X,
+	LogOut,
 } from "lucide-react";
 import type { NavItem } from "@/types/navigation";
+import { useLogout } from "@/hooks/useAuth";
+
 
 const mainNav: NavItem[] = [
 	{ label: "Dashboard", href: "/farmer/dashboard", icon: LayoutDashboard },
@@ -30,6 +33,8 @@ const prefsNav: NavItem[] = [
 export default function Sidebar() {
 	const pathname = usePathname();
 	const [mobileOpen, setMobileOpen] = useState(false);
+	const { mutate: logout, isPending: loggingOut } = useLogout();
+
 
 	const renderNav = (items: NavItem[]) =>
 		items.map(({ label, href, icon: Icon }) => {
@@ -125,7 +130,16 @@ export default function Sidebar() {
 						<HelpCircle size={14} />
 						Help Center
 					</Link>
+					<button
+						onClick={() => logout()}
+						disabled={loggingOut}
+						className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-red-500 font-semibold hover:bg-red-50 transition-colors disabled:opacity-50"
+					>
+						<LogOut size={14} />
+						{loggingOut ? "Logging out..." : "Logout"}
+					</button>
 				</div>
+
 			</aside>
 
 			{/* Mobile drawer */}
@@ -182,7 +196,16 @@ export default function Sidebar() {
 								<HelpCircle size={14} />
 								Help Center
 							</Link>
+							<button
+								onClick={() => logout()}
+								disabled={loggingOut}
+								className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs text-red-500 font-semibold hover:bg-red-50 transition-colors disabled:opacity-50"
+							>
+								<LogOut size={14} />
+								{loggingOut ? "Logging out..." : "Logout"}
+							</button>
 						</div>
+
 					</aside>
 				</>
 			)}

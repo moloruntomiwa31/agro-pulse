@@ -6,7 +6,7 @@ export default function AuthLayout({
 	children: React.ReactNode;
 }) {
 	return (
-		<div className="auth-page">
+		<div className="auth-page font-display">
 			<div className="auth-container">
 				{/* Left brand strip */}
 				<div className="auth-brand">

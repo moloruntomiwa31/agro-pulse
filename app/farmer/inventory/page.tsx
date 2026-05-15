@@ -1,10 +1,47 @@
 "use client";
 
-import { Download, Plus, Zap, Calendar, Truck, PackageOpen, LayoutGrid, CheckCircle2, TrendingUp, Search } from "lucide-react";
 import { useInventoryStore } from "../../../lib/store/inventoryStore";
+import { useMyProduces } from "@/hooks/useProduce";
+import { useMyOrders } from "@/hooks/useOrder";
+import { useDemandForecast } from "@/hooks/usePrediction";
+import { 
+  Download, 
+  Plus, 
+  Zap, 
+  Calendar, 
+  Truck, 
+  PackageOpen, 
+  LayoutGrid, 
+  CheckCircle2, 
+  TrendingUp, 
+  Search, 
+  Loader2 
+} from "lucide-react";
+
+import { useEffect, useState } from "react";
+
 
 export default function FarmerInventory() {
-  const { items, setAddModalOpen } = useInventoryStore();
+  const { setAddModalOpen } = useInventoryStore();
+  const { data: produces, isLoading: loadingProduces } = useMyProduces();
+  const { data: orders } = useMyOrders();
+  const [mounted, setMounted] = useState(false);
+
+  // Get prediction for the first produce item
+  const firstProduceId = produces?.results?.[0]?.id;
+  const { data: predictionResponse } = useDemandForecast(firstProduceId || "");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  const items = produces?.results || [];
+  const pendingOrdersCount = Array.isArray(orders) ? orders.filter(o => o.order_status === "PENDING").length : 0;
+  const forecast = predictionResponse?.demand_forecast;
+  const spikeProb = forecast ? parseFloat(forecast.demand_spike_probability) : 0;
+
 
   return (
     <div className="flex-1 overflow-y-auto bg-stone-50/50 p-8">
@@ -45,10 +82,15 @@ export default function FarmerInventory() {
               <span className="text-[10px] font-bold text-orange-600 uppercase tracking-widest">Predictive Insight</span>
             </div>
             
-            <h2 className="text-lg font-bold text-stone-900 mb-2">Early Harvest Recommendation</h2>
+            <h2 className="text-lg font-bold text-stone-900 mb-2">
+              {forecast ? `Early Harvest: ${produces?.results?.[0]?.name}` : "Early Harvest Recommendation"}
+            </h2>
             <p className="text-sm text-stone-500 mb-6 max-w-lg leading-relaxed">
-              Our AI engine predicts a <strong className="text-stone-900">24% demand spike</strong> for Organic Roma Tomatoes in the metropolitan area next week. We recommend adjusting your harvest schedule 2 days earlier to capture premium pricing.
+              {forecast 
+                ? `Our AI engine predicts a ${spikeProb.toFixed(0)}% demand spike for ${produces?.results?.[0]?.name} in your region. Adjusting your harvest schedule can help capture premium pricing.`
+                : "Add produce and allow AI analysis to provide optimal harvest recommendations based on market demand spikes."}
             </p>
+
             
             <div className="flex flex-wrap gap-4 mb-6">
                <div className="bg-orange-50 border border-orange-100 rounded-xl px-4 py-3 min-w-[140px]">
@@ -90,7 +132,7 @@ export default function FarmerInventory() {
             
             <div className="bg-white rounded-2xl border border-stone-200 shadow-sm p-4 flex items-center justify-between">
               <span className="text-sm font-semibold text-stone-900">Pending Orders</span>
-              <span className="w-8 h-8 rounded-full bg-forest-950 text-white flex items-center justify-center text-xs font-bold">12</span>
+              <span className="w-8 h-8 rounded-full bg-forest-950 text-white flex items-center justify-center text-xs font-bold">{pendingOrdersCount}</span>
             </div>
           </div>
         </div>
@@ -118,32 +160,43 @@ export default function FarmerInventory() {
                   <tr>
                     <th className="text-[10px] font-bold text-stone-400 uppercase tracking-widest py-4 px-6 bg-stone-50/50">Produce Details</th>
                     <th className="text-[10px] font-bold text-stone-400 uppercase tracking-widest py-4 px-6 bg-stone-50/50">Status</th>
-                    <th className="text-[10px] font-bold text-stone-400 uppercase tracking-widest py-4 px-6 bg-stone-50/50">Quantity</th>
-                    <th className="text-[10px] font-bold text-stone-400 uppercase tracking-widest py-4 px-6 bg-stone-50/50">Harvest Date</th>
+                    <th className="text-[10px] font-bold text-stone-400 uppercase tracking-widest py-4 px-6 bg-stone-50/50">Base Price</th>
+                    <th className="text-[10px] font-bold text-stone-400 uppercase tracking-widest py-4 px-6 bg-stone-50/50">Listed At</th>
                   </tr>
                 </thead>
                 <tbody className="text-sm">
-                  {items.map((row, i) => {
+                  {loadingProduces ? (
+                    <tr>
+                      <td colSpan={4} className="py-12 text-center">
+                        <Loader2 className="animate-spin inline-block text-forest-500" size={24} />
+                      </td>
+                    </tr>
+                  ) : items.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="py-12 text-center text-stone-500 font-medium">
+                        No active inventory found. Click "Add Produce" to start.
+                      </td>
+                    </tr>
+                  ) : items.map((row, i) => {
                     const statusColors = {
-                      'Available': 'bg-forest-50 text-forest-700 border-forest-200',
-                      'Low Stock': 'bg-red-50 text-red-700 border-red-200',
-                      'Growing': 'bg-stone-100 text-stone-700 border-stone-200'
+                      'AVAILABLE': 'bg-forest-50 text-forest-700 border-forest-200',
+                      'OUT_OF_STOCK': 'bg-red-50 text-red-700 border-red-200',
                     };
-                    const sc = statusColors[row.status] || statusColors['Growing'];
+                    const sc = statusColors[row.availability_status as keyof typeof statusColors] || 'bg-stone-100 text-stone-700 border-stone-200';
 
                     return (
-                      <tr key={i} className="border-b border-stone-100 last:border-0 hover:bg-stone-50 transition-colors group">
+                      <tr key={row.id} className="border-b border-stone-100 last:border-0 hover:bg-stone-50 transition-colors group">
                         <td className="py-4 px-6">
                           <p className="font-bold text-stone-900">{row.name}</p>
-                          <p className="text-[10px] text-stone-500 mt-0.5">{row.type} • {row.id}</p>
+                          <p className="text-[10px] text-stone-500 mt-0.5">{row.category} • {row.id.slice(0, 8)}</p>
                         </td>
                         <td className="py-4 px-6">
                           <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest border ${sc}`}>
-                            {row.status}
+                            {row.availability_status.replace('_', ' ')}
                           </span>
                         </td>
-                        <td className="py-4 px-6 font-semibold text-stone-700">{row.qty}</td>
-                        <td className="py-4 px-6 font-medium text-stone-500">{row.date}</td>
+                        <td className="py-4 px-6 font-semibold text-stone-700">₦{parseFloat(row.price).toLocaleString()}</td>
+                        <td className="py-4 px-6 font-medium text-stone-500">{new Date(row.created_at).toLocaleDateString()}</td>
                       </tr>
                     );
                   })}
@@ -152,12 +205,13 @@ export default function FarmerInventory() {
             </div>
 
             <div className="p-4 border-t border-stone-100 flex items-center justify-between bg-stone-50/50">
-               <p className="text-xs font-medium text-stone-500">Showing 3 of 18 produce types</p>
+               <p className="text-xs font-medium text-stone-500">Showing {items.length} produces</p>
                <div className="flex items-center gap-2">
                  <button className="px-3 py-1.5 rounded-lg border border-stone-200 text-xs font-semibold text-stone-600 bg-white hover:bg-stone-50">Previous</button>
                  <button className="px-3 py-1.5 rounded-lg border border-stone-200 text-xs font-semibold text-stone-600 bg-white hover:bg-stone-50">Next</button>
                </div>
             </div>
+
           </div>
 
         </div>

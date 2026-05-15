@@ -60,9 +60,10 @@ export function useLogin() {
 			// Redirect based on role
 			const roleRoutes: Record<string, string> = {
 				BUYER: "/marketplace",
-				SELLER: "/farmer",
-				TRANSPORTER: "/rider",
+				SELLER: "/farmer/dashboard",
+				TRANSPORTER: "/rider/dashboard",
 			};
+
 			router.push(roleRoutes[user.role] ?? "/");
 		},
 	});

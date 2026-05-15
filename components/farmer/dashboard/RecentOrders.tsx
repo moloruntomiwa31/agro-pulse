@@ -3,11 +3,17 @@ import { useMyOrders } from "@/hooks/useOrder";
 import EmptyState from "@/components/shared/EmptyState";
 import { ClipboardList, Loader2, BrainCircuit } from "lucide-react";
 import BuyerReturnCell from "./BuyerReturnCell";
+import { useMyProduces } from "@/hooks/useProduce";
+
 
 
 
 export default function RecentOrders() {
   const { data: orders, isLoading, isError } = useMyOrders();
+  const { data: produces } = useMyProduces();
+
+  const fallbackProduceId = produces?.results?.[0]?.id || "";
+
 
   if (isLoading) {
     return (
@@ -67,8 +73,9 @@ export default function RecentOrders() {
                     </span>
                   </td>
                   <td className="py-4">
-                    <BuyerReturnCell buyerId={order.buyer} produceId="66c40e53-488b-491d-9e6e-21443428989a" />
+                    <BuyerReturnCell buyerId={order.buyer} produceId={fallbackProduceId} />
                   </td>
+
                   <td className="py-4">
                     <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest border ${
                       isPaid ? "bg-forest-100 text-forest-700 border-forest-200" : "bg-orange-100 text-orange-700 border-orange-200"

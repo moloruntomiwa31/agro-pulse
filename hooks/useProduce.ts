@@ -1,4 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuthStore } from "@/lib/store/authStore";
+
+
 import * as produceApi from "@/lib/api/produce";
 import type {
 	ProduceFilters,
@@ -13,6 +16,15 @@ export function useProduces(filters?: ProduceFilters) {
 		queryFn: () => produceApi.getProduces(filters),
 	});
 }
+
+export function useMyProduces() {
+	return useQuery({
+		queryKey: ["produces", "mine"],
+		queryFn: () => produceApi.getMyProduces(),
+	});
+}
+
+
 
 export function useProduce(id: string) {
 	return useQuery({

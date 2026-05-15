@@ -47,11 +47,6 @@ export default function SignInPage() {
 				</p>
 			</div>
 
-			{/* Debug Info - showing localStorage */}
-			<div className="mb-5 text-xs bg-blue-50 p-2 rounded border border-blue-200 text-blue-700">
-				<p>💡 Check browser console (F12) for API details when logging in</p>
-			</div>
-
 			{/* Form */}
 			<form className="flex flex-col gap-5" onSubmit={handleSubmit}>
 				<div>
