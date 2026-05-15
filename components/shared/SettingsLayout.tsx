@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
-import { User, Bell, Shield, CreditCard, MapPin, Building, Banknote, Loader2 } from "lucide-react";
+import { User, Bell, Shield, CreditCard, MapPin, Building, Banknote, Loader2, Repeat, Calendar, Pause, Play, XCircle, Clock } from "lucide-react";
+
 import { useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/lib/store/authStore";
 import { updateUser } from "@/lib/api/auth";
@@ -8,6 +9,8 @@ import { useToastStore } from "@/lib/store/toastStore";
 import ToastContainer from "@/components/shared/ToastContainer";
 
 export type TabType = 'profile' | 'notifications' | 'security' | 'payment' | 'addresses' | 'farm' | 'payouts' | 'vehicle';
+
+export type TabType = 'profile' | 'notifications' | 'security' | 'payment' | 'addresses' | 'farm' | 'payouts' | 'subscriptions';
 
 
 export interface SettingsTab {
@@ -212,7 +215,101 @@ export function AddressesTab() {
   );
 }
 
+import { useMySubscriptions, usePauseSubscription, useResumeSubscription, useCancelSubscription } from "@/hooks/useSubscription";
+
+export function SubscriptionsTab() {
+  const { data: subs, isLoading } = useMySubscriptions();
+  const pauseMutation = usePauseSubscription();
+  const resumeMutation = useResumeSubscription();
+  const cancelMutation = useCancelSubscription();
+  const showToast = useToastStore((state) => state.showToast);
+
+  if (isLoading) {
+    return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-forest-500" /></div>;
+  }
+
+  if (!subs || subs.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-stone-200 rounded-2xl">
+        <Repeat size={40} className="text-stone-300 mb-4" />
+        <p className="text-sm font-bold text-stone-900 mb-1">No Active Subscriptions</p>
+        <p className="text-xs text-stone-400 max-w-xs mb-6">
+          Set up recurring orders for your favorite produce during checkout to save time.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {subs.map((sub) => (
+        <div key={sub.id} className="p-4 rounded-2xl border border-stone-200 bg-white shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className={`p-3 rounded-xl ${sub.active ? 'bg-forest-50 text-forest-600' : 'bg-stone-50 text-stone-400'}`}>
+              <Repeat size={20} />
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-stone-900">{sub.produce_name}</h4>
+              <p className="text-[10px] text-stone-500 uppercase tracking-widest font-semibold">
+                {sub.farmer_name} · {sub.frequency} · {sub.expected_quantity} units
+              </p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <Clock size={12} className="text-stone-400" />
+                <span className="text-[10px] text-stone-400 font-medium">Next: {new Date(sub.next_expected_order_date).toLocaleDateString()}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-tighter ${
+              sub.status === 'ACTIVE' ? 'bg-forest-100 text-forest-700' : 
+              sub.status === 'PAUSED' ? 'bg-amber-100 text-amber-700' : 'bg-stone-100 text-stone-700'
+            }`}>
+              {sub.status}
+            </span>
+            
+            <div className="h-4 w-[1px] bg-stone-100 mx-1" />
+
+            {sub.status === 'ACTIVE' && (
+              <button 
+                onClick={() => pauseMutation.mutate(sub.id, { onSuccess: () => showToast("Subscription paused", "info") })}
+                className="p-2 rounded-lg hover:bg-amber-50 text-amber-600 transition-colors" 
+                title="Pause"
+              >
+                <Pause size={16} />
+              </button>
+            )}
+            {sub.status === 'PAUSED' && (
+              <button 
+                onClick={() => resumeMutation.mutate(sub.id, { onSuccess: () => showToast("Subscription resumed", "success") })}
+                className="p-2 rounded-lg hover:bg-forest-50 text-forest-600 transition-colors" 
+                title="Resume"
+              >
+                <Play size={16} />
+              </button>
+            )}
+            {sub.status !== 'CANCELLED' && (
+              <button 
+                onClick={() => {
+                  if (confirm("Are you sure you want to cancel this subscription permanently?")) {
+                    cancelMutation.mutate(sub.id, { onSuccess: () => showToast("Subscription cancelled", "error") });
+                  }
+                }}
+                className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors" 
+                title="Cancel"
+              >
+                <XCircle size={16} />
+              </button>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function GenericSettingsLayout({ title, description, tabs }: { title: string, description: string, tabs: SettingsTab[] }) {
+
   const [activeTab, setActiveTab] = useState<TabType>(tabs[0].id);
   const searchParams = useSearchParams();
 
@@ -263,7 +360,8 @@ export function GenericSettingsLayout({ title, description, tabs }: { title: str
             {activeTab === 'profile' && <ProfileTab />}
             {activeTab === 'notifications' && <NotificationsTab />}
             {activeTab === 'addresses' && <AddressesTab />}
-            {['security', 'payment', 'farm', 'payouts', 'vehicle'].includes(activeTab) && (
+            {activeTab === 'subscriptions' && <SubscriptionsTab />}
+            {['security', 'payment', 'farm', 'payouts'].includes(activeTab) && (
 
                <div className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-stone-200 rounded-2xl">
                  <p className="text-sm font-bold text-stone-400 mb-1">Coming Soon</p>

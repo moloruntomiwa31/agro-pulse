@@ -3,11 +3,15 @@ import { useState } from "react";
 import { LayoutGrid, Calendar } from "lucide-react";
 import { useProductStore } from "@/lib/store/productStore";
 import { useInventoryStore } from "@/lib/store/inventoryStore";
+import { useAuthStore } from "@/lib/store/authStore";
+
 
 export default function QuickUploadForm() {
   const { addProduct } = useProductStore();
   const { addItem, setAddModalOpen } = useInventoryStore();
+  const user = useAuthStore((state) => state.user);
   const [loading, setLoading] = useState(false);
+
   const [success, setSuccess] = useState(false);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -29,17 +33,19 @@ export default function QuickUploadForm() {
       // 1. Add to Marketplace
       addProduct({
         name: name,
-        farm: "Babangida Poultry",
-        location: "Kano, NG",
-        price: `₦${price}`,
+        farm: user?.farmer_profile?.farm_name || "Babangida Poultry",
+        farmerId: user?.farmer_profile?.id || "default-farmer",
+        location: user?.farmer_profile?.farm_location || "Kano, NG",
+        price: `₦${parseFloat(price).toLocaleString()}`,
         unit: "kg",
         badge: "NEW",
         badgeColor: "green",
         harvestDate: formattedDate,
         available: `${qty} kg total`,
-        image: "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=400&q=70", // Default produce image
+        image: "https://images.unsplash.com/photo-1598170845058-32b9d6a5da37?w=400&q=70",
         organic: true,
       });
+
 
       // 2. Add to Inventory
       addItem({

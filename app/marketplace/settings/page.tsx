@@ -1,16 +1,18 @@
 "use client";
 
 import { GenericSettingsLayout, SettingsTab } from "../../../components/shared/SettingsLayout";
-import { User, Bell, Shield, MapPin, CreditCard } from "lucide-react";
+import { User, Bell, Shield, MapPin, CreditCard, Repeat } from "lucide-react";
 
 export default function BuyerSettings() {
   const tabs: SettingsTab[] = [
     { id: 'profile', label: 'My Profile', icon: User },
+    { id: 'subscriptions', label: 'Produce Subscriptions', icon: Repeat },
     { id: 'addresses', label: 'Delivery Addresses', icon: MapPin },
     { id: 'payment', label: 'Payment Methods', icon: CreditCard },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'security', label: 'Security', icon: Shield },
   ];
+
 
   return (
     <GenericSettingsLayout 
