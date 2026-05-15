@@ -7,7 +7,8 @@ import { updateUser } from "@/lib/api/auth";
 import { useToastStore } from "@/lib/store/toastStore";
 import ToastContainer from "@/components/shared/ToastContainer";
 
-export type TabType = 'profile' | 'notifications' | 'security' | 'payment' | 'addresses' | 'farm' | 'payouts';
+export type TabType = 'profile' | 'notifications' | 'security' | 'payment' | 'addresses' | 'farm' | 'payouts' | 'vehicle';
+
 
 export interface SettingsTab {
   id: TabType;
@@ -262,7 +263,8 @@ export function GenericSettingsLayout({ title, description, tabs }: { title: str
             {activeTab === 'profile' && <ProfileTab />}
             {activeTab === 'notifications' && <NotificationsTab />}
             {activeTab === 'addresses' && <AddressesTab />}
-            {['security', 'payment', 'farm', 'payouts'].includes(activeTab) && (
+            {['security', 'payment', 'farm', 'payouts', 'vehicle'].includes(activeTab) && (
+
                <div className="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-stone-200 rounded-2xl">
                  <p className="text-sm font-bold text-stone-400 mb-1">Coming Soon</p>
                  <p className="text-xs text-stone-400 max-w-xs">This settings panel is currently under construction.</p>
