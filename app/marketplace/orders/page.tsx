@@ -9,10 +9,19 @@ import {
 	ClipboardList,
 	Loader2,
 	AlertCircle,
+	Trash2,
+	ChevronDown,
+	ChevronUp,
 } from "lucide-react";
-import { useMyOrders } from "../../../hooks/useOrder";
+import { useState } from "react";
+import { useMyOrders, useDeleteOrder } from "../../../hooks/useOrder";
+import { useOrderItemsByOrder } from "../../../hooks/useOrderItem";
+import { useInitializePayment, useMyPayments } from "../../../hooks/usePayment";
+import { useToastStore } from "../../../lib/store/toastStore";
 import EmptyState from "../../../components/shared/EmptyState";
+
 import type { Order, OrderStatus } from "../../../types/order";
+
 
 const STATUS_STEPS: { status: OrderStatus; label: string; sub: string }[] = [
 	{ status: "PENDING", label: "Order Placed", sub: "Awaiting payment" },
@@ -37,22 +46,78 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
 	CANCELLED: "bg-red-50 text-red-700 border-red-100",
 };
 
-function OrderCard({ order }: { order: Order }) {
+/** Only PENDING and CANCELLED orders can be deleted */
+const DELETABLE_STATUSES: OrderStatus[] = ["PENDING", "CANCELLED"];
+
+interface OrderCardProps {
+	order: Order;
+	isPaymentInitialized?: boolean;
+}
+
+function OrderCard({ order, isPaymentInitialized }: OrderCardProps) {
+
 	const currentStep = getStepIndex(order.order_status);
+	const [confirming, setConfirming] = useState(false);
+	const deleteMutation = useDeleteOrder();
+	const canDelete = DELETABLE_STATUSES.includes(order.order_status);
+
+	const handleDelete = () => {
+		deleteMutation.mutate(order.id, {
+			onSuccess: () => setConfirming(false),
+		});
+	};
+
+	const { mutateAsync: initPayment, isPending: isInitializing } = useInitializePayment();
+	const showToast = useToastStore((state) => state.showToast);
+	const [expanded, setExpanded] = useState(false);
+	const { data: itemsResponse, isLoading: itemsLoading } = useOrderItemsByOrder(order.id);
+	const items = itemsResponse || [];
+
+	const handlePayNow = async () => {
+
+		try {
+			const res = await initPayment({ order_id: order.id });
+			if (res.checkout_url) {
+				window.location.href = res.checkout_url;
+			}
+		} catch (err: any) {
+			if (err.message?.toLowerCase().includes("already paid")) {
+				showToast("Order is already paid and secured.", "success");
+				// Force refresh or redirect to success would be good here if we had the payment ID
+				return;
+			}
+			showToast(err.message || "Failed to initialize payment", "error");
+		}
+
+	};
+
 
 	return (
 		<div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
 			{/* Header */}
-			<div className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border-b border-stone-100 bg-stone-50/50">
+			<div 
+				onClick={() => setExpanded(!expanded)}
+				className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border-b border-stone-100 bg-stone-50/50 cursor-pointer hover:bg-stone-100/50 transition-colors"
+			>
+
 				<div>
 					<div className="flex items-center gap-3 mb-1">
 						<span className="text-sm font-bold text-stone-900">
 							Order #{order.id.slice(0, 8).toUpperCase()}
 						</span>
 						<span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest border ${STATUS_COLORS[order.order_status]}`}>
-							{order.order_status.replace("_", " ")}
+							{order.order_status === "PENDING" && isPaymentInitialized 
+								? "Awaiting Confirmation" 
+								: order.order_status.replace("_", " ")}
 						</span>
+						{isPaymentInitialized && order.order_status === "PENDING" && (
+							<div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-100 animate-pulse">
+								<div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+								<span className="text-[9px] font-bold text-amber-600 uppercase">Payment Initialized</span>
+							</div>
+						)}
 					</div>
+
 					<p className="text-xs font-medium text-stone-500">
 						{order.farmer_farm_name} · ₦{parseFloat(order.total).toLocaleString("en-NG")} ·{" "}
 						{new Date(order.created_at).toLocaleDateString("en-NG", {
@@ -62,13 +127,105 @@ function OrderCard({ order }: { order: Order }) {
 						})}
 					</p>
 				</div>
-				<div className="mt-4 sm:mt-0 flex items-center gap-2">
-					<ShieldCheck size={16} className="text-forest-600" />
-					<span className="text-xs font-semibold text-forest-700">
-						{order.delivery_type === "DELIVERY" ? "Home Delivery" : "Pickup"}
-					</span>
+				<div className="mt-4 sm:mt-0 flex items-center gap-3">
+					<div className="flex items-center gap-2">
+						<ShieldCheck size={16} className="text-forest-600" />
+						<span className="text-xs font-semibold text-forest-700">
+							{order.delivery_type === "DELIVERY" ? "Home Delivery" : "Pickup"}
+						</span>
+					</div>
+					{order.order_status === "PAID" && (
+						<div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-forest-50 border border-forest-100">
+							<ShieldCheck size={14} className="text-forest-600" />
+							<span className="text-[10px] font-bold text-forest-700 uppercase tracking-wider">
+								Payment Secured
+							</span>
+						</div>
+					)}
+
+					{order.order_status === "PENDING" && (
+						<button
+							onClick={(e) => {
+								e.stopPropagation();
+								handlePayNow();
+							}}
+							disabled={isInitializing}
+							className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-forest-950 hover:bg-forest-900 transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
+						>
+
+							{isInitializing ? (
+								<Loader2 size={14} className="animate-spin" />
+							) : (
+								<ShieldCheck size={14} />
+							)}
+							Pay Now
+						</button>
+					)}
+					<button
+						onClick={(e) => {
+							e.stopPropagation();
+							setExpanded(!expanded);
+						}}
+						className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-600 border border-stone-200 hover:bg-stone-50 transition-colors"
+					>
+
+						{expanded ? "Hide Items" : "View Items"}
+						{expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+					</button>
+					{canDelete && !confirming && (
+
+
+						<button
+							onClick={(e) => {
+								e.stopPropagation();
+								setConfirming(true);
+							}}
+							className="p-1.5 rounded-lg text-stone-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+							title="Delete order"
+						>
+
+							<Trash2 size={15} />
+						</button>
+					)}
 				</div>
 			</div>
+
+			{/* Delete confirmation */}
+			{confirming && (
+				<div className="flex items-center justify-between px-6 py-3 bg-red-50 border-b border-red-100">
+					<p className="text-sm text-red-700 font-medium">
+						Delete order #{order.id.slice(0, 8).toUpperCase()}? This cannot be undone.
+					</p>
+					<div className="flex items-center gap-2 ml-4 shrink-0">
+						<button
+							onClick={(e) => {
+								e.stopPropagation();
+								setConfirming(false);
+							}}
+							className="px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-600 border border-stone-200 hover:bg-stone-100 transition-colors"
+						>
+
+							Cancel
+						</button>
+						<button
+							onClick={(e) => {
+								e.stopPropagation();
+								handleDelete();
+							}}
+							disabled={deleteMutation.isPending}
+							className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 disabled:opacity-60 transition-colors flex items-center gap-1.5"
+						>
+
+							{deleteMutation.isPending ? (
+								<Loader2 size={12} className="animate-spin" />
+							) : (
+								<Trash2 size={12} />
+							)}
+							Delete
+						</button>
+					</div>
+				</div>
+			)}
 
 			{/* Progress pipeline */}
 			{order.order_status !== "CANCELLED" && (
@@ -113,12 +270,76 @@ function OrderCard({ order }: { order: Order }) {
 					</div>
 				</div>
 			)}
+
+			{/* Items List */}
+			{expanded && (
+				<div className="border-t border-stone-100 bg-stone-50/30">
+					<div className="px-6 py-4">
+						<h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-3">
+							Order Contents
+						</h4>
+						{itemsLoading ? (
+							<div className="flex items-center justify-center py-4">
+								<Loader2 size={16} className="animate-spin text-forest-500" />
+							</div>
+						) : items.length === 0 ? (
+							<p className="text-xs text-stone-500 py-2 italic">No items found for this order.</p>
+						) : (
+							<div className="flex flex-col gap-3">
+								{items.map((item) => (
+									<div key={item.id} className="flex items-center justify-between bg-white p-3 rounded-xl border border-stone-200 shadow-sm">
+										<div className="flex items-center gap-3">
+											<div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center text-xl">
+												{item.produce_category === "VEGETABLES" ? "🥬" : 
+												 item.produce_category === "FRUITS" ? "🍎" : 
+												 item.produce_category === "GRAINS" ? "🌾" : "📦"}
+											</div>
+											<div>
+												<p className="text-sm font-bold text-stone-900">{item.produce_name}</p>
+												<p className="text-[10px] text-stone-500">
+													{item.quantity} units · ₦{parseFloat(item.unit_price).toLocaleString()} / unit
+												</p>
+											</div>
+										</div>
+										<div className="text-right">
+											<p className="text-sm font-black text-forest-950">
+												₦{parseFloat(item.subtotal).toLocaleString()}
+											</p>
+											<span className="inline-flex items-center gap-1 text-[9px] font-bold text-forest-600 bg-forest-50 px-1.5 py-0.5 rounded-full border border-forest-100">
+												<ShieldCheck size={10} />
+												AI Verified Quality
+											</span>
+										</div>
+									</div>
+								))}
+								
+								<div className="flex justify-between items-center pt-2 mt-1 border-t border-stone-100">
+									<p className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Order Total</p>
+									<p className="text-base font-black text-forest-950">₦{parseFloat(order.total).toLocaleString()}</p>
+								</div>
+							</div>
+						)}
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }
 
+
 export default function OrdersPage() {
-	const { data: orders, isLoading, isError } = useMyOrders();
+	const { data: orders, isLoading: ordersLoading, isError } = useMyOrders();
+	const { data: paymentsResponse, isLoading: paymentsLoading } = useMyPayments();
+
+	const isLoading = ordersLoading || paymentsLoading;
+	const payments = paymentsResponse?.results || [];
+
+	// Map of order IDs that have initialized payments
+	const initializedOrderIds = new Set(
+		payments
+			.filter((p) => p.payment_status === "PENDING")
+			.map((p) => p.order)
+	);
 
 	if (isLoading) {
 		return (
@@ -127,6 +348,7 @@ export default function OrdersPage() {
 			</div>
 		);
 	}
+
 
 	if (isError) {
 		return (
@@ -176,9 +398,14 @@ export default function OrdersPage() {
 							Active Orders ({activeOrders.length})
 						</h2>
 						{activeOrders.map((order) => (
-							<OrderCard key={order.id} order={order} />
+							<OrderCard 
+								key={order.id} 
+								order={order} 
+								isPaymentInitialized={initializedOrderIds.has(order.id)}
+							/>
 						))}
 					</div>
+
 				)}
 
 				{pastOrders.length > 0 && (
@@ -187,9 +414,14 @@ export default function OrdersPage() {
 							Past Orders ({pastOrders.length})
 						</h2>
 						{pastOrders.map((order) => (
-							<OrderCard key={order.id} order={order} />
+							<OrderCard 
+								key={order.id} 
+								order={order} 
+								isPaymentInitialized={initializedOrderIds.has(order.id)}
+							/>
 						))}
 					</div>
+
 				)}
 			</div>
 		</div>

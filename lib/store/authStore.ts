@@ -3,6 +3,11 @@ import { persist } from "zustand/middleware";
 
 export type UserRole = "BUYER" | "SELLER" | "TRANSPORTER";
 
+export interface UserProfile {
+	id: string;
+	[key: string]: unknown;
+}
+
 export interface User {
 	id: string;
 	full_name: string;
@@ -10,9 +15,9 @@ export interface User {
 	phone_number: string;
 	role: UserRole;
 	is_active: boolean;
-	farmer_profile: Record<string, unknown> | null;
-	buyer_profile: Record<string, unknown> | null;
-	transporter_profile: Record<string, unknown> | null;
+	farmer_profile: UserProfile | null;
+	buyer_profile: UserProfile | null;
+	transporter_profile: UserProfile | null;
 	created_at: string;
 	updated_at: string;
 }

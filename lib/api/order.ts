@@ -3,11 +3,15 @@ import type {
   Order,
   OrderFilters,
   OrderListResponse,
+  OrderDetail,
   CreateOrderInput,
   UpdateOrderStatusInput,
+  OrderStatus,
 } from "@/types/order";
 
+
 export async function getOrders(filters?: OrderFilters): Promise<OrderListResponse> {
+
   const params = new URLSearchParams();
   if (filters?.buyer) params.set("buyer", filters.buyer);
   if (filters?.farmer) params.set("farmer", filters.farmer);
@@ -23,9 +27,21 @@ export async function getMyOrders(): Promise<OrderListResponse> {
   return apiRequest<OrderListResponse>("/api/orders/my_orders/");
 }
 
-export async function getOrder(id: string): Promise<Order> {
-  return apiRequest<Order>(`/api/orders/${id}/`);
+export async function getPendingOrders(): Promise<OrderListResponse> {
+  return apiRequest<OrderListResponse>("/api/orders/pending_orders/");
 }
+
+export async function getOrdersByStatus(
+  status: OrderStatus,
+): Promise<OrderListResponse> {
+  return apiRequest<OrderListResponse>(`/api/orders/by_status/?status=${status}`);
+}
+
+export async function getOrder(id: string): Promise<OrderDetail> {
+  return apiRequest<OrderDetail>(`/api/orders/${id}/`);
+}
+
+
 
 export async function createOrder(data: CreateOrderInput): Promise<Order> {
   return apiRequest<Order>("/api/orders/", {

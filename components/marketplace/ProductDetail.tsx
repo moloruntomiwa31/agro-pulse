@@ -26,8 +26,9 @@ export default function ProductDetail({ product, onClose }: ProductDetailProps) 
       price: numericPrice,
       unit: detail.unit,
       image: detail.image,
-      farmerId: produce?.farmer || "b7d2e4f6-91c3-4a2b-8d0e-56f7a8b9c012"
+      farmerId: detail.farmerId,
     });
+
     router.push("/marketplace/checkout");
   };
 

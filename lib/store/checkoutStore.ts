@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { createOrder } from "@/lib/api/order";
+import { createOrderItem } from "@/lib/api/orderItem";
 import { useAuthStore } from "@/lib/store/authStore";
 
 export type CartItem = {
@@ -132,18 +133,35 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
     }
 
     const user = useAuthStore.getState().user;
-    const buyerId = (user?.buyer_profile as Record<string, unknown> | null)?.id as string | undefined;
 
-    if (!buyerId) throw new Error("Buyer profile not found. Please complete your profile.");
+    // buyer_profile.id  = BuyerProfile UUID  (required by POST /api/orders/)
+    // activeFarmerId    = FarmerProfile UUID  (p.farmer from produce response)
+    // order.id          = Order UUID          (required by POST /api/order-items/)
+    // item.id           = Produce UUID        (required by POST /api/order-items/)
+    const buyerId = user?.buyer_profile?.id;
 
-    const total = get().subtotal().toFixed(2);
+    if (!buyerId)
+      throw new Error("Buyer profile not found. Please complete your profile.");
 
+    // Step 1: POST /api/orders/ — create the order header
     const order = await createOrder({
       buyer: buyerId,
       farmer: state.activeFarmerId,
-      total,
+      total: get().subtotal().toFixed(2),
       delivery_type: deliveryType,
     });
+
+    // Step 2: POST /api/order-items/ for each cart item using order.id
+    await Promise.all(
+      state.items.map((item) =>
+        createOrderItem({
+          order: order.id,
+          produce: item.id,
+          quantity: item.quantity,
+          unit_price: item.price.toFixed(2),
+        }),
+      ),
+    );
 
     set({ items: [], activeFarmerId: null, activeFarmerName: null });
     return order;

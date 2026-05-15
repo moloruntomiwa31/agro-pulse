@@ -32,7 +32,9 @@ export async function apiRequest<T>(
 		endpoint,
 		method: options?.method || "GET",
 		url,
+		body: options?.body ? JSON.parse(options.body as string) : null,
 	});
+
 
 	let response = await fetch(url, {
 		...options,

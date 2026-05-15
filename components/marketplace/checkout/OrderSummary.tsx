@@ -6,16 +6,22 @@ import { useCreateOrder } from "@/hooks/useOrder";
 import { useAuthStore } from "@/lib/store/authStore";
 import { useToastStore } from "@/lib/store/toastStore";
 import { useInitializePayment } from "@/hooks/usePayment";
+import { useCreateOrderItem } from "@/hooks/useOrderItem";
+
 
 export default function OrderSummary() {
-	const { subtotal, total, shipping, serviceFee, items, placeOrder } =
+	const { subtotal, total, shipping, serviceFee, items, clearCart, activeFarmerId } =
 		useCheckoutStore();
+
+
 	const router = useRouter();
 	const { mutateAsync: createOrderApi, isPending: isCreatingOrder } =
 		useCreateOrder();
 	const { mutateAsync: initPaymentApi, isPending: isInitializingPayment } =
 		useInitializePayment();
+	const { mutateAsync: createOrderItemApi } = useCreateOrderItem();
 	const user = useAuthStore((state) => state.user);
+
 	const showToast = useToastStore((state) => state.showToast);
 
 	const isPending = isCreatingOrder || isInitializingPayment;
@@ -23,47 +29,81 @@ export default function OrderSummary() {
 	const handleCheckout = async () => {
 		if (items.length === 0) return;
 		try {
-			const farmerId =
-				items[0]?.farmerId || "b7d2e4f6-91c3-4a2b-8d0e-56f7a8b9c012";
+			const farmerId = activeFarmerId;
+
 			const orderTotal = total();
 
+			const buyerId = user?.buyer_profile?.id;
+
+			if (!buyerId) {
+				showToast(
+					"Buyer profile not found. Please complete your profile before checking out.",
+					"error",
+				);
+				return;
+			}
+
+			if (!farmerId) {
+				showToast("No farmer associated with these items.", "error");
+				return;
+			}
+
 			const createdOrder = await createOrderApi({
-				buyer: user?.id || "c2d5f3b8-44e0-4c9f-b6a1-83d2e4f0a716",
+				buyer: buyerId,
 				farmer: farmerId,
 				total: orderTotal.toFixed(2),
 				delivery_type: "DELIVERY",
 			});
 
+
 			if (createdOrder && createdOrder.id) {
+				// Create Order Items
+				await Promise.all(
+					items.map((item) =>
+						createOrderItemApi({
+							order: createdOrder.id,
+							produce: item.id,
+							quantity: item.quantity,
+							unit_price: item.price.toFixed(2),
+						}),
+					),
+				);
+
 				showToast("Order created! Initializing Squad payment...", "info");
 				try {
 					const paymentRes = await initPaymentApi({
 						order_id: createdOrder.id,
 					});
 					if (paymentRes && paymentRes.checkout_url) {
-						placeOrder();
+						clearCart();
 						window.location.href = paymentRes.checkout_url;
 						return;
 					}
 				} catch (paymentErr: any) {
-					showToast(
-						"Squad payment initialization notice. Proceeding to order history.",
-						"info",
-					);
+					if (paymentErr.message?.toLowerCase().includes("already paid")) {
+						showToast("Payment already confirmed for this order.", "success");
+					} else {
+						showToast(
+							"Squad payment initialization notice. Proceeding to order history.",
+							"info",
+						);
+					}
 				}
+
 			}
 
-			placeOrder();
+			clearCart();
 			showToast("Order placed successfully!", "success");
 			router.push("/marketplace/orders");
 		} catch (err: any) {
+			console.error("[Checkout] Error:", err);
 			showToast(
-				`Backend sync notice: ${err.message || "Failed to sync"}. Proceeding locally.`,
-				"info",
+				`Order failed: ${err.message || "Please try again."}`,
+				"error",
 			);
-			placeOrder();
-			router.push("/marketplace/orders");
 		}
+
+
 	};
 
 	return (
