@@ -20,9 +20,13 @@ export async function apiRequest<T>(
 		: {};
 
 	const headers: Record<string, string> = {
-		"Content-Type": "application/json",
 		...existingHeaders,
 	};
+
+	if (options?.body) {
+		headers["Content-Type"] = "application/json";
+	}
+
 
 	if (token) {
 		headers.Authorization = `Bearer ${token}`;

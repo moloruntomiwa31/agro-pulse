@@ -13,8 +13,10 @@ export function useMyPayments() {
   return useQuery({
     queryKey: ["payments", "my_payments"],
     queryFn: () => paymentApi.getMyPayments(),
+    refetchInterval: 10000, // Sync with webhook updates
   });
 }
+
 
 export function usePendingPayments() {
   return useQuery({
@@ -29,7 +31,9 @@ export function useInitializePayment() {
     mutationFn: (data: InitializePaymentInput) => paymentApi.initializePayment(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["payments"] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
+
   });
 }
 
@@ -40,6 +44,8 @@ export function useVerifyPayment() {
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ["payments"] });
       queryClient.invalidateQueries({ queryKey: ["payment", id] });
+      queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
+
   });
 }

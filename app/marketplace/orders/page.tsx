@@ -16,24 +16,41 @@ import {
 import { useState } from "react";
 import { useMyOrders, useDeleteOrder } from "../../../hooks/useOrder";
 import { useOrderItemsByOrder } from "../../../hooks/useOrderItem";
-import { useInitializePayment, useMyPayments } from "../../../hooks/usePayment";
+import {
+	useInitializePayment,
+	useMyPayments,
+	useVerifyPayment,
+} from "../../../hooks/usePayment";
+
 import { useToastStore } from "../../../lib/store/toastStore";
 import EmptyState from "../../../components/shared/EmptyState";
 
 import type { Order, OrderStatus } from "../../../types/order";
 
-
 const STATUS_STEPS: { status: OrderStatus; label: string; sub: string }[] = [
 	{ status: "PENDING", label: "Order Placed", sub: "Awaiting payment" },
 	{ status: "PAID", label: "Payment Secured", sub: "Funds in escrow" },
-	{ status: "PROCESSING", label: "Harvested & Packed", sub: "Farmer preparing" },
+	{
+		status: "PROCESSING",
+		label: "Harvested & Packed",
+		sub: "Farmer preparing",
+	},
 	{ status: "IN_TRANSIT", label: "In Transit", sub: "En route to you" },
 	{ status: "COMPLETED", label: "Delivered", sub: "Order complete" },
 ];
 
-const STATUS_ORDER: OrderStatus[] = ["PENDING", "PAID", "PROCESSING", "IN_TRANSIT", "COMPLETED"];
+const STATUS_ORDER: OrderStatus[] = [
+	"PENDING",
+	"PAID",
+	"PROCESSING",
+	"IN_TRANSIT",
+	"COMPLETED",
+];
 
-function getStepIndex(status: OrderStatus) {
+function getStepIndex(status: OrderStatus, isPaymentConfirmed?: boolean) {
+	if (status === "PENDING" && isPaymentConfirmed) {
+		return STATUS_ORDER.indexOf("PAID");
+	}
 	return STATUS_ORDER.indexOf(status);
 }
 
@@ -52,29 +69,52 @@ const DELETABLE_STATUSES: OrderStatus[] = ["PENDING", "CANCELLED"];
 interface OrderCardProps {
 	order: Order;
 	isPaymentInitialized?: boolean;
+	isPaymentConfirmed?: boolean;
+	payments: any[];
 }
 
-function OrderCard({ order, isPaymentInitialized }: OrderCardProps) {
-
-	const currentStep = getStepIndex(order.order_status);
+function OrderCard({
+	order,
+	isPaymentInitialized,
+	isPaymentConfirmed,
+	payments,
+}: OrderCardProps) {
+	const currentStep = getStepIndex(order.order_status, isPaymentConfirmed);
 	const [confirming, setConfirming] = useState(false);
 	const deleteMutation = useDeleteOrder();
+
 	const canDelete = DELETABLE_STATUSES.includes(order.order_status);
 
 	const handleDelete = () => {
 		deleteMutation.mutate(order.id, {
-			onSuccess: () => setConfirming(false),
+			onSuccess: () => {
+				setConfirming(false);
+				showToast("Order deleted successfully", "success");
+			},
+			onError: (err: any) => {
+				showToast(err.message || "Failed to delete order", "error");
+			},
 		});
 	};
 
-	const { mutateAsync: initPayment, isPending: isInitializing } = useInitializePayment();
+	const { mutateAsync: initPayment, isPending: isInitializing } =
+		useInitializePayment();
+	const { mutateAsync: verifyPayment, isPending: isVerifying } =
+		useVerifyPayment();
 	const showToast = useToastStore((state) => state.showToast);
 	const [expanded, setExpanded] = useState(false);
-	const { data: itemsResponse, isLoading: itemsLoading } = useOrderItemsByOrder(order.id);
+	const { data: itemsResponse, isLoading: itemsLoading } = useOrderItemsByOrder(
+		order.id,
+	);
+
+	// Optimistic UI: hide card immediately if deletion is pending or successful
+	if (deleteMutation.isPending || deleteMutation.isSuccess) {
+		return null;
+	}
+
 	const items = itemsResponse || [];
 
 	const handlePayNow = async () => {
-
 		try {
 			const res = await initPayment({ order_id: order.id });
 			if (res.checkout_url) {
@@ -83,43 +123,76 @@ function OrderCard({ order, isPaymentInitialized }: OrderCardProps) {
 		} catch (err: any) {
 			if (err.message?.toLowerCase().includes("already paid")) {
 				showToast("Order is already paid and secured.", "success");
-				// Force refresh or redirect to success would be good here if we had the payment ID
 				return;
 			}
 			showToast(err.message || "Failed to initialize payment", "error");
 		}
-
 	};
 
+	const handleVerify = async () => {
+		try {
+			const matchingPayment = payments.find(
+				(p) => p.order === order.id && p.payment_status === "PENDING",
+			);
+			if (matchingPayment) {
+				const res = await verifyPayment(matchingPayment.id);
+				if (res.payment_status === "SUCCESS") {
+					showToast("Payment verified! Order is now secured.", "success");
+				} else {
+					showToast("Payment is still processing on Squad's end.", "info");
+				}
+			} else {
+				showToast("No pending payment record found for this order.", "error");
+			}
+		} catch (err: any) {
+			showToast(err.message || "Verification failed", "error");
+		}
+	};
 
 	return (
 		<div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
 			{/* Header */}
-			<div 
+			<div
 				onClick={() => setExpanded(!expanded)}
 				className="flex flex-col sm:flex-row sm:items-center justify-between p-6 border-b border-stone-100 bg-stone-50/50 cursor-pointer hover:bg-stone-100/50 transition-colors"
 			>
-
 				<div>
 					<div className="flex items-center gap-3 mb-1">
 						<span className="text-sm font-bold text-stone-900">
 							Order #{order.id.slice(0, 8).toUpperCase()}
 						</span>
-						<span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest border ${STATUS_COLORS[order.order_status]}`}>
-							{order.order_status === "PENDING" && isPaymentInitialized 
-								? "Awaiting Confirmation" 
-								: order.order_status.replace("_", " ")}
+						<span
+							className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest border ${STATUS_COLORS[order.order_status]}`}
+						>
+							{order.order_status === "PENDING" && isPaymentConfirmed
+								? "Payment Secured"
+								: order.order_status === "PENDING" && isPaymentInitialized
+									? "Awaiting Confirmation"
+									: order.order_status.replace("_", " ")}
 						</span>
-						{isPaymentInitialized && order.order_status === "PENDING" && (
-							<div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-100 animate-pulse">
-								<div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-								<span className="text-[9px] font-bold text-amber-600 uppercase">Payment Initialized</span>
+						{isPaymentConfirmed && order.order_status === "PENDING" && (
+							<div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-forest-50 border border-forest-100">
+								<ShieldCheck size={14} className="text-forest-600" />
+								<span className="text-[9px] font-bold text-forest-600 uppercase tracking-tight">
+									Backend Syncing...
+								</span>
 							</div>
 						)}
+						{isPaymentInitialized &&
+							!isPaymentConfirmed &&
+							order.order_status === "PENDING" && (
+								<div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-100 animate-pulse">
+									<div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+									<span className="text-[9px] font-bold text-amber-600 uppercase">
+										Payment Initialized
+									</span>
+								</div>
+							)}
 					</div>
 
 					<p className="text-xs font-medium text-stone-500">
-						{order.farmer_farm_name} · ₦{parseFloat(order.total).toLocaleString("en-NG")} ·{" "}
+						{order.farmer_farm_name} · ₦
+						{parseFloat(order.total).toLocaleString("en-NG")} ·{" "}
 						{new Date(order.created_at).toLocaleDateString("en-NG", {
 							month: "short",
 							day: "numeric",
@@ -143,7 +216,7 @@ function OrderCard({ order, isPaymentInitialized }: OrderCardProps) {
 						</div>
 					)}
 
-					{order.order_status === "PENDING" && (
+					{order.order_status === "PENDING" && !isPaymentConfirmed && (
 						<button
 							onClick={(e) => {
 								e.stopPropagation();
@@ -152,7 +225,6 @@ function OrderCard({ order, isPaymentInitialized }: OrderCardProps) {
 							disabled={isInitializing}
 							className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-forest-950 hover:bg-forest-900 transition-all shadow-sm flex items-center gap-2 disabled:opacity-50"
 						>
-
 							{isInitializing ? (
 								<Loader2 size={14} className="animate-spin" />
 							) : (
@@ -161,6 +233,24 @@ function OrderCard({ order, isPaymentInitialized }: OrderCardProps) {
 							Pay Now
 						</button>
 					)}
+					{order.order_status === "PENDING" && isPaymentInitialized && (
+						<button
+							onClick={(e) => {
+								e.stopPropagation();
+								handleVerify();
+							}}
+							disabled={isVerifying}
+							className="px-4 py-2 rounded-xl text-xs font-bold text-forest-700 bg-forest-50 hover:bg-forest-100 transition-all border border-forest-200 flex items-center gap-2 disabled:opacity-50"
+						>
+							{isVerifying ? (
+								<Loader2 size={14} className="animate-spin" />
+							) : (
+								<ShieldCheck size={14} />
+							)}
+							Verify Payment
+						</button>
+					)}
+
 					<button
 						onClick={(e) => {
 							e.stopPropagation();
@@ -168,13 +258,10 @@ function OrderCard({ order, isPaymentInitialized }: OrderCardProps) {
 						}}
 						className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-600 border border-stone-200 hover:bg-stone-50 transition-colors"
 					>
-
 						{expanded ? "Hide Items" : "View Items"}
 						{expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
 					</button>
 					{canDelete && !confirming && (
-
-
 						<button
 							onClick={(e) => {
 								e.stopPropagation();
@@ -183,7 +270,6 @@ function OrderCard({ order, isPaymentInitialized }: OrderCardProps) {
 							className="p-1.5 rounded-lg text-stone-400 hover:text-red-500 hover:bg-red-50 transition-colors"
 							title="Delete order"
 						>
-
 							<Trash2 size={15} />
 						</button>
 					)}
@@ -194,7 +280,8 @@ function OrderCard({ order, isPaymentInitialized }: OrderCardProps) {
 			{confirming && (
 				<div className="flex items-center justify-between px-6 py-3 bg-red-50 border-b border-red-100">
 					<p className="text-sm text-red-700 font-medium">
-						Delete order #{order.id.slice(0, 8).toUpperCase()}? This cannot be undone.
+						Delete order #{order.id.slice(0, 8).toUpperCase()}? This cannot be
+						undone.
 					</p>
 					<div className="flex items-center gap-2 ml-4 shrink-0">
 						<button
@@ -204,7 +291,6 @@ function OrderCard({ order, isPaymentInitialized }: OrderCardProps) {
 							}}
 							className="px-3 py-1.5 rounded-lg text-xs font-semibold text-stone-600 border border-stone-200 hover:bg-stone-100 transition-colors"
 						>
-
 							Cancel
 						</button>
 						<button
@@ -215,7 +301,6 @@ function OrderCard({ order, isPaymentInitialized }: OrderCardProps) {
 							disabled={deleteMutation.isPending}
 							className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-red-500 hover:bg-red-600 disabled:opacity-60 transition-colors flex items-center gap-1.5"
 						>
-
 							{deleteMutation.isPending ? (
 								<Loader2 size={12} className="animate-spin" />
 							) : (
@@ -235,32 +320,57 @@ function OrderCard({ order, isPaymentInitialized }: OrderCardProps) {
 						<div className="absolute top-4 left-4 right-4 h-0.5 bg-stone-100" />
 						<div
 							className="absolute top-4 left-4 h-0.5 bg-forest-500 transition-all duration-500"
-							style={{ width: `${(currentStep / (STATUS_STEPS.length - 1)) * 100}%` }}
+							style={{
+								width: `${(currentStep / (STATUS_STEPS.length - 1)) * 100}%`,
+							}}
 						/>
 
 						{STATUS_STEPS.map((step, i) => {
 							const done = i <= currentStep;
 							const active = i === currentStep;
 							return (
-								<div key={step.status} className="flex flex-col items-center gap-2 relative z-10">
-									<div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-[0_0_0_3px_white] transition-colors ${
-										done ? "bg-forest-500" : "bg-stone-100 border border-stone-200"
-									} ${active ? "ring-4 ring-forest-100" : ""}`}>
+								<div
+									key={step.status}
+									className="flex flex-col items-center gap-2 relative z-10"
+								>
+									<div
+										className={`w-8 h-8 rounded-full flex items-center justify-center shadow-[0_0_0_3px_white] transition-colors ${
+											done
+												? "bg-forest-500"
+												: "bg-stone-100 border border-stone-200"
+										} ${active ? "ring-4 ring-forest-100" : ""}`}
+									>
 										{i === 3 ? (
-											<Truck size={13} className={done ? "text-white" : "text-stone-400"} />
+											<Truck
+												size={13}
+												className={done ? "text-white" : "text-stone-400"}
+											/>
 										) : i === 2 ? (
-											<Package size={13} className={done ? "text-white" : "text-stone-400"} />
+											<Package
+												size={13}
+												className={done ? "text-white" : "text-stone-400"}
+											/>
 										) : i === 4 ? (
-											<MapPin size={13} className={done ? "text-white" : "text-stone-400"} />
+											<MapPin
+												size={13}
+												className={done ? "text-white" : "text-stone-400"}
+											/>
 										) : (
-											<Check size={13} className={done ? "text-white" : "text-stone-400"} />
+											<Check
+												size={13}
+												className={done ? "text-white" : "text-stone-400"}
+											/>
 										)}
 									</div>
 									<div className="text-center hidden sm:block">
-										<p className={`text-[11px] font-bold ${active ? "text-forest-700" : done ? "text-stone-700" : "text-stone-400"}`}>
+										<p
+											className={`text-[11px] font-bold ${active ? "text-forest-700" : done ? "text-stone-700" : "text-stone-400"}`}
+										>
 											{step.label}
 										</p>
-										<p className={`text-[9px] uppercase tracking-wider mt-0.5 ${active ? "text-forest-500" : "text-stone-400"}`}>
+										<p
+											className={`text-[9px] uppercase tracking-wider mt-0.5 ${active ? "text-forest-500" : "text-stone-400"}`}
+										>
 											{step.sub}
 										</p>
 									</div>
@@ -283,21 +393,33 @@ function OrderCard({ order, isPaymentInitialized }: OrderCardProps) {
 								<Loader2 size={16} className="animate-spin text-forest-500" />
 							</div>
 						) : items.length === 0 ? (
-							<p className="text-xs text-stone-500 py-2 italic">No items found for this order.</p>
+							<p className="text-xs text-stone-500 py-2 italic">
+								No items found for this order.
+							</p>
 						) : (
 							<div className="flex flex-col gap-3">
 								{items.map((item) => (
-									<div key={item.id} className="flex items-center justify-between bg-white p-3 rounded-xl border border-stone-200 shadow-sm">
+									<div
+										key={item.id}
+										className="flex items-center justify-between bg-white p-3 rounded-xl border border-stone-200 shadow-sm"
+									>
 										<div className="flex items-center gap-3">
 											<div className="w-10 h-10 rounded-lg bg-stone-100 flex items-center justify-center text-xl">
-												{item.produce_category === "VEGETABLES" ? "🥬" : 
-												 item.produce_category === "FRUITS" ? "🍎" : 
-												 item.produce_category === "GRAINS" ? "🌾" : "📦"}
+												{item.produce_category === "VEGETABLES"
+													? "🥬"
+													: item.produce_category === "FRUITS"
+														? "🍎"
+														: item.produce_category === "GRAINS"
+															? "🌾"
+															: "📦"}
 											</div>
 											<div>
-												<p className="text-sm font-bold text-stone-900">{item.produce_name}</p>
+												<p className="text-sm font-bold text-stone-900">
+													{item.produce_name}
+												</p>
 												<p className="text-[10px] text-stone-500">
-													{item.quantity} units · ₦{parseFloat(item.unit_price).toLocaleString()} / unit
+													{item.quantity} units · ₦
+													{parseFloat(item.unit_price).toLocaleString()} / unit
 												</p>
 											</div>
 										</div>
@@ -312,10 +434,14 @@ function OrderCard({ order, isPaymentInitialized }: OrderCardProps) {
 										</div>
 									</div>
 								))}
-								
+
 								<div className="flex justify-between items-center pt-2 mt-1 border-t border-stone-100">
-									<p className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Order Total</p>
-									<p className="text-base font-black text-forest-950">₦{parseFloat(order.total).toLocaleString()}</p>
+									<p className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">
+										Order Total
+									</p>
+									<p className="text-base font-black text-forest-950">
+										₦{parseFloat(order.total).toLocaleString()}
+									</p>
 								</div>
 							</div>
 						)}
@@ -326,19 +452,22 @@ function OrderCard({ order, isPaymentInitialized }: OrderCardProps) {
 	);
 }
 
-
 export default function OrdersPage() {
 	const { data: orders, isLoading: ordersLoading, isError } = useMyOrders();
-	const { data: paymentsResponse, isLoading: paymentsLoading } = useMyPayments();
+	const { data: paymentsResponse, isLoading: paymentsLoading } =
+		useMyPayments();
 
 	const isLoading = ordersLoading || paymentsLoading;
 	const payments = paymentsResponse?.results || [];
 
 	// Map of order IDs that have initialized payments
 	const initializedOrderIds = new Set(
-		payments
-			.filter((p) => p.payment_status === "PENDING")
-			.map((p) => p.order)
+		payments.filter((p) => p.payment_status === "PENDING").map((p) => p.order),
+	);
+
+	// Map of order IDs that have successful payments
+	const confirmedOrderIds = new Set(
+		payments.filter((p) => p.payment_status === "SUCCESS").map((p) => p.order),
 	);
 
 	if (isLoading) {
@@ -348,7 +477,6 @@ export default function OrdersPage() {
 			</div>
 		);
 	}
-
 
 	if (isError) {
 		return (
@@ -360,10 +488,10 @@ export default function OrdersPage() {
 	}
 
 	const activeOrders = (Array.isArray(orders) ? orders : []).filter(
-		(o) => o.order_status !== "COMPLETED" && o.order_status !== "CANCELLED"
+		(o) => o.order_status !== "COMPLETED" && o.order_status !== "CANCELLED",
 	);
 	const pastOrders = (Array.isArray(orders) ? orders : []).filter(
-		(o) => o.order_status === "COMPLETED" || o.order_status === "CANCELLED"
+		(o) => o.order_status === "COMPLETED" || o.order_status === "CANCELLED",
 	);
 
 	if (!orders || (Array.isArray(orders) && orders.length === 0)) {
@@ -398,14 +526,15 @@ export default function OrdersPage() {
 							Active Orders ({activeOrders.length})
 						</h2>
 						{activeOrders.map((order) => (
-							<OrderCard 
-								key={order.id} 
-								order={order} 
+							<OrderCard
+								key={order.id}
+								order={order}
 								isPaymentInitialized={initializedOrderIds.has(order.id)}
+								isPaymentConfirmed={confirmedOrderIds.has(order.id)}
+								payments={payments}
 							/>
 						))}
 					</div>
-
 				)}
 
 				{pastOrders.length > 0 && (
@@ -414,14 +543,15 @@ export default function OrdersPage() {
 							Past Orders ({pastOrders.length})
 						</h2>
 						{pastOrders.map((order) => (
-							<OrderCard 
-								key={order.id} 
-								order={order} 
+							<OrderCard
+								key={order.id}
+								order={order}
 								isPaymentInitialized={initializedOrderIds.has(order.id)}
+								isPaymentConfirmed={confirmedOrderIds.has(order.id)}
+								payments={payments}
 							/>
 						))}
 					</div>
-
 				)}
 			</div>
 		</div>

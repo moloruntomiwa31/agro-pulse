@@ -15,8 +15,10 @@ export function useMyOrders() {
   return useQuery({
     queryKey: ["orders", "my"],
     queryFn: () => orderApi.getMyOrders(),
+    refetchInterval: 10000, // Poll every 10s to catch webhook updates
   });
 }
+
 
 export function usePendingOrders() {
   return useQuery({
@@ -69,7 +71,11 @@ export function useDeleteOrder() {
   return useMutation({
     mutationFn: (id: string) => orderApi.deleteOrder(id),
     onSuccess: () => {
+      // Invalidate all orders queries to force a refetch
       queryClient.invalidateQueries({ queryKey: ["orders"] });
+      // Specifically target the "my orders" query used in the dashboard
+      queryClient.refetchQueries({ queryKey: ["orders", "my"] });
     },
+
   });
 }

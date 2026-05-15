@@ -10,35 +10,32 @@ import { useToastStore } from "@/lib/store/toastStore";
 
 export default function PaymentSuccessPage() {
 	const searchParams = useSearchParams();
-	const paymentId = searchParams.get("payment_id");
+	const paymentId = searchParams.get("reference");
 	const { mutateAsync: verifyPayment, isPending } = useVerifyPayment();
 	const [status, setStatus] = useState<"verifying" | "success" | "error">("verifying");
+	const [verifiedPayment, setVerifiedPayment] = useState<any>(null);
 	const showToast = useToastStore((state) => state.showToast);
 	const router = useRouter();
 	const [countdown, setCountdown] = useState(5);
 
-
 	useEffect(() => {
+
 		if (paymentId) {
 			verifyPayment(paymentId)
 				.then((payment) => {
 					if (payment.payment_status === "SUCCESS") {
+						setVerifiedPayment(payment);
 						setStatus("success");
 						showToast("Payment verified successfully!", "success");
+
 						
 						// Start countdown for redirect
 						const timer = setInterval(() => {
-							setCountdown((prev) => {
-								if (prev <= 1) {
-									clearInterval(timer);
-									router.push("/marketplace/orders");
-									return 0;
-								}
-								return prev - 1;
-							});
+							setCountdown((prev) => prev - 1);
 						}, 1000);
 
 						return () => clearInterval(timer);
+
 					} else if (payment.payment_status === "FAILED") {
 						setStatus("error");
 						showToast("Payment failed according to Squad.", "error");
@@ -54,7 +51,15 @@ export default function PaymentSuccessPage() {
 		} else {
 			setStatus("error");
 		}
-	}, [paymentId, verifyPayment, showToast, router]);
+	}, [paymentId, verifyPayment, showToast]);
+
+	// Separate effect for redirect to avoid "update during render" error
+	useEffect(() => {
+		if (status === "success" && countdown === 0) {
+			router.push("/marketplace/orders");
+		}
+	}, [status, countdown, router]);
+
 
 
 	return (
@@ -81,6 +86,16 @@ export default function PaymentSuccessPage() {
 								Your funds are now held in escrow. Redirecting to your orders in {countdown}s...
 							</p>
 						</div>
+
+						{verifiedPayment && (
+							<div className="bg-stone-50 border border-stone-100 rounded-2xl px-4 py-3 flex items-center justify-between w-full">
+								<span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Order ID</span>
+								<span className="text-xs font-mono font-bold text-stone-600">
+									#{verifiedPayment.order.slice(0, 8).toUpperCase()}
+								</span>
+							</div>
+						)}
+
 
 
 						{/* Escrow Badge */}
