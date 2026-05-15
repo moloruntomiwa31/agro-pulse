@@ -1,36 +1,86 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AgroPulse 🌾
 
-## Getting Started
+**AgroPulse** is a high-fidelity, AI-powered agricultural intelligence and marketplace platform designed to bridge the gap between farmers and bulk buyers. By combining real-time market data with predictive analytics, AgroPulse empowers farmers to optimize their harvest cycles and provides buyers with data-driven supply chain visibility.
 
-First, run the development server:
+---
+
+## 🚀 Key Features
+
+### 1. AI Predictive Intelligence
+*   **Demand Forecasting**: Predicts regional demand spikes for specific produce types (e.g., "24% demand spike expected for Tomatoes next week").
+*   **Buyer Return Prediction**: Analyzes buyer restock patterns to predict when they will likely return for their next purchase, allowing farmers to prepare stock in advance.
+*   **Early Harvest Recommendations**: AI-driven operational advice that suggests optimal harvest windows to capture premium market pricing.
+
+### 2. Farmer Pro Dashboard
+*   **Operational Overview**: Real-time tracking of pending, in-transit, and delivered orders.
+*   **Dynamic Inventory**: A robust produce management system that synchronizes directly with the public marketplace.
+*   **Trust Scoring**: A reliability metric for farmers based on delivery performance and buyer feedback.
+
+### 3. Integrated Marketplace
+*   **Discovery Engine**: Advanced filtering by category, availability, and harvest date.
+*   **Product Insights**: Buyers can view detailed produce information including organic certifications and AI-generated supply stability scores.
+
+### 4. Seamless Logistics & Payments
+*   **Escrow Settlements**: Secure payment tracking where funds are held in escrow until delivery is confirmed.
+*   **Role-Based Access**: Dedicated workflows for Buyers (Retailers/Wholesalers) and Sellers (Farmers/Aggregators).
+
+---
+
+## 🛠 Tech Stack
+
+*   **Frontend**: Next.js (App Router), TypeScript, Tailwind CSS
+*   **State Management**: Zustand (Toast Store, Auth Store, Inventory Store)
+*   **Icons**: Lucide React
+*   **API Layer**: Custom `apiRequest` utility with robust error parsing and TanStack Query (React Query) for data fetching/mutations.
+*   **Theming**: Custom Brutalist-Dark design language with ambient glows and glassmorphism.
+
+---
+
+## 📂 Project Structure
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+├── app/                  # Next.js App Router (Dashboard, Marketplace, Auth)
+├── components/           # Reusable UI components
+│   ├── farmer/           # Farmer-specific widgets (KPIs, Charts, Tables)
+│   ├── marketplace/      # Buyer-facing product cards and filters
+│   └── shared/           # Global components (TopBar, Sidebar, EmptyStates)
+├── hooks/                # Custom React hooks (useAuth, useProduce, usePrediction)
+├── lib/                  # Utility functions and API clients
+├── public/               # Static assets and images
+├── types/                # TypeScript interface definitions
+└── README.md             # Project documentation
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## ⚙️ Getting Started
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Prerequisites
+*   Node.js (v18+)
+*   npm or pnpm
 
-## Learn More
+### Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/agro-pulse.git
+   ```
+2. Install dependencies:
+   ```bash
+   pnpm install
+   ```
+3. Run the development server:
+   ```bash
+   pnpm dev
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🛡 Security & Reliability
+*   **JWT Authentication**: Secure token-based auth flow.
+*   **Defensive UI**: Robust error handling that safely stringifies API error objects to prevent runtime crashes.
+*   **Loading States**: Skeleton loaders and spinners integrated across all AI and data-heavy components.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📈 Impact Potential
+AgroPulse aims to reduce post-harvest waste by 15-20% through better demand matching and improve farmer revenue by providing the intelligence needed to time harvests for peak market value.
