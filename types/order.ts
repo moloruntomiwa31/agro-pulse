@@ -19,7 +19,7 @@ export interface Order {
 export interface CreateOrderInput {
   buyer: string;
   farmer: string;
-  total: string | number;
+  total: string;
   delivery_type: DeliveryType;
 }
 
@@ -36,9 +36,5 @@ export interface OrderFilters {
   ordering?: string;
 }
 
-export interface OrderListResponse {
-  count: number;
-  next?: string | null;
-  previous?: string | null;
-  results: Order[];
-}
+/** API returns a plain array */
+export type OrderListResponse = Order[];

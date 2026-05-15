@@ -8,6 +8,7 @@ export interface Product {
   id: string;
   name: string;
   farm: string;
+  farmerId: string;
   location: string;
   price: string;
   unit: string;
@@ -21,6 +22,7 @@ export interface Product {
   outOfStock?: boolean;
   description?: string;
   category?: string;
+  _rawPrice?: number;
 }
 
 export interface ProductCardProps {
@@ -46,13 +48,15 @@ const CATEGORY_IMAGES: Record<string, string> = {
 
 /** Map a list Produce response to the UI Product shape */
 export function produceToProduct(p: Produce): Product {
+  const price = parseFloat(p.unit_price);
   return {
     id: p.id,
     name: p.produce_name,
     farm: p.farmer_farm_name ?? p.farmer_user_full_name ?? "Unknown Farm",
+    farmerId: p.farmer,
     location: "",
-    price: `₦${parseFloat(p.unit_price).toLocaleString()}`,
-    unit: "kg",
+    price: `₦${price.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    unit: "unit",
     harvestDate: p.harvest_date,
     available:
       p.availability_status === AvailabilityStatus.AVAILABLE
@@ -63,18 +67,21 @@ export function produceToProduct(p: Produce): Product {
     image: CATEGORY_IMAGES[p.category] ?? CATEGORY_IMAGES.OTHER,
     outOfStock: p.availability_status === AvailabilityStatus.SOLD_OUT,
     category: p.category,
+    _rawPrice: price,
   };
 }
 
 /** Map a detail ProduceDetail response to the UI Product shape */
 export function produceDetailToProduct(p: ProduceDetail): Product {
+  const price = parseFloat(p.unit_price);
   return {
     id: p.id,
     name: p.produce_name,
     farm: p.farmer_details?.farm_name ?? "Unknown Farm",
+    farmerId: p.farmer,
     location: p.farmer_details?.farm_location ?? "",
-    price: `₦${parseFloat(p.unit_price).toLocaleString()}`,
-    unit: "kg",
+    price: `₦${price.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+    unit: "unit",
     harvestDate: p.harvest_date,
     available:
       p.availability_status === AvailabilityStatus.AVAILABLE
@@ -84,8 +91,8 @@ export function produceDetailToProduct(p: ProduceDetail): Product {
         : undefined,
     image: CATEGORY_IMAGES[p.category] ?? CATEGORY_IMAGES.OTHER,
     outOfStock: p.availability_status === AvailabilityStatus.SOLD_OUT,
-    description: undefined,
     category: p.category,
+    _rawPrice: price,
   };
 }
 

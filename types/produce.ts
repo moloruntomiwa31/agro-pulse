@@ -48,12 +48,7 @@ export interface ProduceFilters {
   ordering?: string;
 }
 
-export interface ProduceListResponse {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: Produce[];
-}
+export type ProduceListResponse = Produce[];
 
 export interface CreateProduceInput {
   farmer: string;

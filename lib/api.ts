@@ -13,7 +13,7 @@ export async function apiRequest<T>(
 
 	// Read token directly from Zustand store state (works in both client and server contexts)
 	const authState = useAuthStore.getState();
-	const token = authState.accessToken || "test_access_token";
+	const token = authState.accessToken;
 
 	const existingHeaders = options?.headers
 		? Object.fromEntries(new Headers(options.headers).entries())
@@ -28,13 +28,24 @@ export async function apiRequest<T>(
 		headers.Authorization = `Bearer ${token}`;
 	}
 
+	console.log("[API] Request:", {
+		endpoint,
+		method: options?.method || "GET",
+		url,
+	});
+
 	let response = await fetch(url, {
 		...options,
 		headers,
 	});
 
 	// If 401 Unauthorized and we have a refreshToken, attempt to refresh and retry
-	if (response.status === 401 && authState.refreshToken && !endpoint.includes("/token/refresh") && !isRefreshing) {
+	if (
+		response.status === 401 &&
+		authState.refreshToken &&
+		!endpoint.includes("/token/refresh") &&
+		!isRefreshing
+	) {
 		isRefreshing = true;
 		try {
 			const refreshRes = await fetch(`${API_URL}/api/token/refresh/`, {
@@ -46,7 +57,8 @@ export async function apiRequest<T>(
 			if (refreshRes.ok) {
 				const tokenData = await refreshRes.json();
 				const newAccess = tokenData.access || tokenData.accessToken;
-				const newRefresh = tokenData.refresh || tokenData.refreshToken || authState.refreshToken;
+				const newRefresh =
+					tokenData.refresh || tokenData.refreshToken || authState.refreshToken;
 
 				authState.setTokens(newAccess, newRefresh);
 
@@ -67,14 +79,54 @@ export async function apiRequest<T>(
 	}
 
 	if (!response.ok) {
-		const error = await response.json().catch(() => ({}));
-		const message =
-			error.detail ||
-			error.message ||
-			(typeof error === "string" ? error : null) ||
-			`Request failed: ${response.status} ${response.statusText}`;
+		let errorData: any = {};
+		const responseText = await response.text();
+
+		try {
+			errorData = JSON.parse(responseText);
+		} catch (e) {
+			errorData = { raw: responseText };
+		}
+
+		console.error("[API] Error:", {
+			endpoint,
+			status: response.status,
+			statusText: response.statusText,
+			error: errorData,
+		});
+
+		// Extract error message from various formats
+		let message = `${response.status} ${response.statusText}`;
+
+		if (typeof errorData === "string") {
+			message = errorData;
+		} else if (errorData.detail) {
+			message = errorData.detail;
+		} else if (errorData.message) {
+			message = errorData.message;
+		} else if (Array.isArray(errorData)) {
+			// Handle array of errors
+			message = errorData
+				.map((e: any) => e.detail || e.message || String(e))
+				.join(", ");
+		} else if (errorData.raw) {
+			message = `${response.status}: ${errorData.raw.substring(0, 200)}`;
+		} else if (Object.keys(errorData).length > 0) {
+			// Handle object with field errors
+			message = Object.entries(errorData)
+				.map(([field, value]: [string, any]) => {
+					if (Array.isArray(value)) {
+						return `${field}: ${value.join(", ")}`;
+					}
+					return `${field}: ${value}`;
+				})
+				.join("; ");
+		}
+
 		throw new Error(message);
 	}
 
-	return response.json() as Promise<T>;
-}
+	const data = (await response.json()) as T;
+	console.log("[API] Success:", { endpoint, status: response.status });
+	return data;
+}

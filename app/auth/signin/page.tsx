@@ -30,7 +30,7 @@ export default function SignInPage() {
 			toast.error(
 				error instanceof Error
 					? error.message
-					: "Failed to sign in. Please try again."
+					: "Failed to sign in. Please try again.",
 			);
 		}
 	};
@@ -45,6 +45,11 @@ export default function SignInPage() {
 				<p className="text-base text-green-700">
 					Sign in to your AgroPulse account
 				</p>
+			</div>
+
+			{/* Debug Info - showing localStorage */}
+			<div className="mb-5 text-xs bg-blue-50 p-2 rounded border border-blue-200 text-blue-700">
+				<p>💡 Check browser console (F12) for API details when logging in</p>
 			</div>
 
 			{/* Form */}
@@ -82,8 +87,11 @@ export default function SignInPage() {
 				</div>
 
 				{loginMutation.isError && (
-					<div className="rounded-md bg-red-50 p-3">
-						<p className="text-sm font-medium text-red-800">
+					<div className="rounded-md bg-red-50 p-4 border border-red-200">
+						<p className="text-sm font-semibold text-red-900 mb-2">
+							Sign in failed
+						</p>
+						<p className="text-sm text-red-800 whitespace-pre-wrap font-mono bg-red-100 p-2 rounded">
 							{loginMutation.error instanceof Error
 								? loginMutation.error.message
 								: "Failed to sign in"}

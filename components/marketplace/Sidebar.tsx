@@ -4,12 +4,13 @@ import { usePathname } from "next/navigation";
 import {
 	ShoppingBag,
 	ClipboardList,
-	BarChart3,
 	Settings,
 	Zap,
 	HelpCircle,
+	LogOut,
 } from "lucide-react";
 import type { NavItem } from "@/types/navigation";
+import { useLogout } from "@/hooks/useAuth";
 
 const mainNav: NavItem[] = [
 	{ label: "Marketplace", href: "/marketplace", icon: ShoppingBag },
@@ -23,6 +24,7 @@ const prefsNav: NavItem[] = [
 
 export default function Sidebar() {
 	const pathname = usePathname();
+	const { mutate: logout, isPending: isLoggingOut } = useLogout();
 
 	return (
 		<aside className="w-56 shrink-0 flex flex-col h-screen sticky top-0 border-r border-stone-200 bg-stone-50">
@@ -107,7 +109,7 @@ export default function Sidebar() {
 				</button>
 			</div>
 
-			<div className="px-3 pb-4">
+			<div className="px-3 pb-4 flex flex-col gap-1">
 				<Link
 					href="/help"
 					className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-stone-500 hover:text-stone-700 transition-colors"
@@ -115,7 +117,19 @@ export default function Sidebar() {
 					<HelpCircle size={16} />
 					Help Center
 				</Link>
+
+				{/* Sign Out */}
+				<button
+					onClick={() => logout()}
+					disabled={isLoggingOut}
+					className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors disabled:opacity-50 w-full text-left"
+				>
+					<LogOut size={16} />
+					{isLoggingOut ? "Signing out..." : "Sign Out"}
+				</button>
 			</div>
 		</aside>
 	);
 }
+
+

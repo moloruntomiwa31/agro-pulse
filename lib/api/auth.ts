@@ -73,10 +73,12 @@ export async function logout(): Promise<void> {
 }
 
 /** Update user profile — PATCH /api/users/{id}/ */
-export async function updateUser(userId: string, data: Partial<User>): Promise<User> {
+export async function updateUser(
+	userId: string,
+	data: Partial<User>,
+): Promise<User> {
 	return apiRequest<User>(`/api/users/${userId}/`, {
 		method: "PATCH",
 		body: JSON.stringify(data),
 	});
 }
-
